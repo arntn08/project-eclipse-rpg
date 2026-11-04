@@ -7,12 +7,12 @@ local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Ga
 local remotes = ReplicatedStorage:WaitForChild("EclipseRemotes")
 local SelectClass = remotes:WaitForChild("SelectClass")
 local Attack = remotes:WaitForChild("Attack")
+local UseSkill = remotes:WaitForChild("UseSkill")
 local Notify = remotes:WaitForChild("Notify")
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "EclipseHUD"
 gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local function make(className, props, parent)
@@ -86,18 +86,17 @@ make("TextLabel", {
 }, classPanel)
 
 for index, className in ipairs({"Swordsman", "Mage", "Archer"}) do
-    local config = Config.Classes[className]
+    local classConfig = Config.Classes[className]
     local button = make("TextButton", {
         Name = className,
         Size = UDim2.new(1, -20, 0, 34),
         Position = UDim2.fromOffset(10, 37 + (index - 1) * 39),
-        BackgroundColor3 = config.Color,
-        Text = className .. "  —  " .. config.Description,
+        BackgroundColor3 = classConfig.Color,
+        Text = className .. "  —  " .. classConfig.Description,
         TextColor3 = Color3.fromRGB(15, 18, 28),
         TextSize = 11,
         Font = Enum.Font.GothamBold,
         TextWrapped = true,
-        AutoButtonColor = true,
     }, classPanel)
     make("UICorner", {CornerRadius = UDim.new(0, 7)}, button)
     button.Activated:Connect(function()
@@ -107,20 +106,49 @@ end
 
 local attackButton = make("TextButton", {
     Name = "AttackButton",
-    Size = UDim2.fromOffset(116, 116),
-    Position = UDim2.new(1, -145, 1, -155),
+    Size = UDim2.fromOffset(112, 112),
+    Position = UDim2.new(1, -140, 1, -150),
     BackgroundColor3 = Color3.fromRGB(25, 115, 210),
     Text = "ATTACK",
     TextColor3 = Color3.new(1, 1, 1),
-    TextSize = 20,
+    TextSize = 19,
     Font = Enum.Font.GothamBlack,
-    AutoButtonColor = true,
 }, gui)
 make("UICorner", {CornerRadius = UDim.new(1, 0)}, attackButton)
 make("UIStroke", {Color = Color3.fromRGB(130, 220, 255), Thickness = 3}, attackButton)
 attackButton.Activated:Connect(function()
     Attack:FireServer()
 end)
+
+local skillButton = make("TextButton", {
+    Name = "SkillButton",
+    Size = UDim2.fromOffset(92, 92),
+    Position = UDim2.new(1, -250, 1, -126),
+    BackgroundColor3 = Color3.fromRGB(125, 55, 205),
+    Text = "SKILL\nQ",
+    TextColor3 = Color3.new(1, 1, 1),
+    TextSize = 17,
+    Font = Enum.Font.GothamBlack,
+    TextWrapped = true,
+}, gui)
+make("UICorner", {CornerRadius = UDim.new(1, 0)}, skillButton)
+make("UIStroke", {Color = Color3.fromRGB(210, 155, 255), Thickness = 3}, skillButton)
+
+local skillBusy = false
+local function activateSkill()
+    if skillBusy then return end
+    skillBusy = true
+    UseSkill:FireServer()
+    local className = player:GetAttribute("EclipseClass") or "Swordsman"
+    local cooldown = Config.Classes[className].SkillCooldown
+    for remaining = cooldown, 1, -1 do
+        skillButton.Text = tostring(remaining) .. "s"
+        task.wait(1)
+    end
+    skillButton.Text = "SKILL\nQ"
+    skillBusy = false
+end
+skillButton.Activated:Connect(activateSkill)
 
 local notice = make("TextLabel", {
     Name = "Notice",
@@ -162,7 +190,10 @@ task.spawn(function()
 end)
 
 player:GetAttributeChangedSignal("EclipseClass"):Connect(function()
-    classLabel.Text = "CLASS: " .. tostring(player:GetAttribute("EclipseClass"))
+    local className = player:GetAttribute("EclipseClass")
+    classLabel.Text = "CLASS: " .. tostring(className)
+    local skill = Config.Classes[className]
+    if skill then skillButton.Text = skill.SkillName .. "\nQ" end
 end)
 
 Notify.OnClientEvent:Connect(function(message)
@@ -175,5 +206,12 @@ end)
 
 UserInputService.InputBegan:Connect(function(input, processed)
     if processed then return end
-    if input.KeyCode == Enum.KeyCode.F then Attack:FireServer() end
+    if input.KeyCode == Enum.KeyCode.F then
+        Attack:FireServer()
+    elseif input.KeyCode == Enum.KeyCode.Q then
+        activateSkill()
+    end
 end)
+
+local initialClass = player:GetAttribute("EclipseClass") or "Swordsman"
+skillButton.Text = Config.Classes[initialClass].SkillName .. "\nQ"
