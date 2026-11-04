@@ -19,10 +19,13 @@ end
 
 local SelectClass = getRemote("SelectClass")
 local Attack = getRemote("Attack")
+local UseSkill = getRemote("UseSkill")
 local Notify = getRemote("Notify")
 
 local profiles = {}
 local lastAttack = {}
+local lastSkill = {}
+local comboState = {}
 local enemiesFolder = Workspace:FindFirstChild("EclipseEnemies") or Instance.new("Folder")
 enemiesFolder.Name = "EclipseEnemies"
 enemiesFolder.Parent = Workspace
@@ -31,7 +34,6 @@ local function makeLeaderstats(player, data)
     local stats = Instance.new("Folder")
     stats.Name = "leaderstats"
     stats.Parent = player
-
     for name, value in pairs({Level = data.Level, XP = data.XP, Gold = data.Gold}) do
         local item = Instance.new("IntValue")
         item.Name = name
@@ -65,6 +67,7 @@ local function loadProfile(player)
     profiles[player] = data
     makeLeaderstats(player, data)
     player:SetAttribute("EclipseClass", data.Class)
+    player:SetAttribute("EclipseCombo", 0)
     Notify:FireClient(player, "Welcome to Project ECLIPSE, " .. data.Class .. "!")
 end
 
@@ -78,6 +81,32 @@ local function saveProfile(player)
         end)
     end)
     if not ok then warn("ECLIPSE: Data save failed for", player.Name, err) end
+end
+
+local function rewardPlayer(player)
+    local data = profiles[player]
+    if not data then return end
+    data.XP += Config.XPPerEnemy
+    data.Gold += Config.GoldPerEnemy
+    while data.XP >= data.Level * 100 do
+        data.XP -= data.Level * 100
+        data.Level += 1
+        Notify:FireClient(player, "LEVEL UP! You reached Level " .. data.Level)
+    end
+    syncStats(player)
+    Notify:FireClient(player, "+" .. Config.XPPerEnemy .. " XP  |  +" .. Config.GoldPerEnemy .. " Gold")
+end
+
+local function damageEnemy(player, enemy, amount)
+    if not enemy or not enemy.Parent then return false end
+    local health = enemy:FindFirstChild("Health")
+    if not health or health.Value <= 0 then return false end
+    local tag = enemy:FindFirstChild("LastHitBy") or Instance.new("IntValue")
+    tag.Name = "LastHitBy"
+    tag.Value = player.UserId
+    tag.Parent = enemy
+    health.Value = math.max(0, health.Value - amount)
+    return true
 end
 
 local function createEnemy(position, index)
@@ -100,7 +129,6 @@ local function createEnemy(position, index)
     health.Value = Config.EnemyHealth
     health.Parent = model
     model.PrimaryPart = body
-    model:SetAttribute("MaxHealth", Config.EnemyHealth)
 
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "HealthDisplay"
@@ -128,18 +156,7 @@ local function createEnemy(position, index)
         if value <= 0 and model.Parent then
             local tag = model:FindFirstChild("LastHitBy")
             local killer = tag and Players:GetPlayerByUserId(tag.Value)
-            if killer and profiles[killer] then
-                local data = profiles[killer]
-                data.XP += Config.XPPerEnemy
-                data.Gold += Config.GoldPerEnemy
-                while data.XP >= data.Level * 100 do
-                    data.XP -= data.Level * 100
-                    data.Level += 1
-                    Notify:FireClient(killer, "LEVEL UP! You reached Level " .. data.Level)
-                end
-                syncStats(killer)
-                Notify:FireClient(killer, "+" .. Config.XPPerEnemy .. " XP  |  +" .. Config.GoldPerEnemy .. " Gold")
-            end
+            if killer then rewardPlayer(killer) end
             model:Destroy()
             task.delay(Config.EnemyRespawnSeconds, function()
                 if enemiesFolder.Parent then createEnemy(position, index) end
@@ -185,6 +202,8 @@ SelectClass.OnServerEvent:Connect(function(player, className)
     if not data then return end
     data.Class = className
     player:SetAttribute("EclipseClass", className)
+    player:SetAttribute("EclipseCombo", 0)
+    comboState[player] = nil
     Notify:FireClient(player, "Class selected: " .. className)
 end)
 
@@ -212,20 +231,71 @@ Attack.OnServerEvent:Connect(function(player)
         end
     end
 
-    if target then
-        local health = target:FindFirstChild("Health")
-        if health then
-            local damage = class.Damage + math.max(0, data.Level - 1) * 2
-            local tag = target:FindFirstChild("LastHitBy") or Instance.new("IntValue")
-            tag.Name = "LastHitBy"
-            tag.Value = player.UserId
-            tag.Parent = target
-            health.Value = math.max(0, health.Value - damage)
-            Notify:FireClient(player, class.DisplayName .. " hit for " .. damage .. " damage!")
-        end
-    else
+    if not target then
         Notify:FireClient(player, "No enemy in range.")
+        return
     end
+
+    local state = comboState[player] or {Count = 0, Last = 0}
+    if now - state.Last > Config.ComboResetSeconds then state.Count = 0 end
+    state.Count = (state.Count % 3) + 1
+    state.Last = now
+    comboState[player] = state
+    player:SetAttribute("EclipseCombo", state.Count)
+
+    local damage = class.Damage + math.max(0, data.Level - 1) * 2
+    if state.Count == 3 then
+        damage = math.floor(damage * 1.5)
+        Notify:FireClient(player, "3-HIT COMBO! Finisher!")
+    end
+    damageEnemy(player, target, damage)
+    if state.Count ~= 3 then
+        Notify:FireClient(player, class.DisplayName .. " hit for " .. damage .. " damage! Combo " .. state.Count .. "/3")
+    end
+end)
+
+UseSkill.OnServerEvent:Connect(function(player)
+    local now = os.clock()
+    local data = profiles[player]
+    local character = player.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if not data or not root then return end
+
+    local class = Config.Classes[data.Class] or Config.Classes.Swordsman
+    local readyAt = lastSkill[player] or 0
+    if now < readyAt then
+        Notify:FireClient(player, "Skill recharging: " .. math.ceil(readyAt - now) .. "s")
+        return
+    end
+    lastSkill[player] = now + class.SkillCooldown
+
+    local targets = {}
+    for _, enemy in ipairs(enemiesFolder:GetChildren()) do
+        local core = enemy:FindFirstChild("Core")
+        local health = enemy:FindFirstChild("Health")
+        if core and health and health.Value > 0 then
+            local distance = (core.Position - root.Position).Magnitude
+            if distance <= class.SkillRange then
+                table.insert(targets, {Enemy = enemy, Distance = distance})
+            end
+        end
+    end
+
+    if #targets == 0 then
+        lastSkill[player] = now
+        Notify:FireClient(player, "No enemy close enough for " .. class.SkillName .. ".")
+        return
+    end
+
+    table.sort(targets, function(a, b) return a.Distance < b.Distance end)
+    if class.SkillMode == "Single" then
+        damageEnemy(player, targets[1].Enemy, class.SkillDamage + math.max(0, data.Level - 1) * 3)
+    else
+        for _, target in ipairs(targets) do
+            damageEnemy(player, target.Enemy, class.SkillDamage + math.max(0, data.Level - 1) * 3)
+        end
+    end
+    Notify:FireClient(player, class.SkillName .. " activated! Cooldown: " .. class.SkillCooldown .. "s")
 end)
 
 Players.PlayerAdded:Connect(loadProfile)
@@ -233,6 +303,8 @@ Players.PlayerRemoving:Connect(function(player)
     saveProfile(player)
     profiles[player] = nil
     lastAttack[player] = nil
+    lastSkill[player] = nil
+    comboState[player] = nil
 end)
 
 game:BindToClose(function()
