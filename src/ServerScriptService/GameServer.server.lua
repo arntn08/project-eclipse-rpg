@@ -27,6 +27,8 @@ local Notify = getRemote("Notify")
 local DungeonUpdate = getRemote("DungeonUpdate")
 local InventoryAction = getRemote("InventoryAction")
 local InventoryUpdate = getRemote("InventoryUpdate")
+local SkillTreeAction = getRemote("SkillTreeAction")
+local SkillTreeUpdate = getRemote("SkillTreeUpdate")
 
 local profiles = {}
 local lastAttack = {}
@@ -65,6 +67,24 @@ local function sendInventory(player)
         end
     end
     InventoryUpdate:FireClient(player, {Items=items, Equipped=data.Equipped})
+end
+
+local function sendSkillTree(player)
+    local data=profiles[player]
+    if not data then return end
+    SkillTreeUpdate:FireClient(player,{
+        Class=data.Class,
+        Ranks=data.SkillRanks and data.SkillRanks[data.Class] or {Power=0,Focus=0,Mastery=0},
+        Gold=data.Gold,
+        MaxRank=Config.SkillTree.MaxRank,
+        Nodes=Config.SkillTree.Nodes,
+    })
+end
+
+local function getSkillRanks(data)
+    data.SkillRanks=data.SkillRanks or {}
+    data.SkillRanks[data.Class]=data.SkillRanks[data.Class] or {Power=0,Focus=0,Mastery=0}
+    return data.SkillRanks[data.Class]
 end
 
 local function getEquipmentBonuses(data)
@@ -161,7 +181,7 @@ local function grantRewards(player, xp, gold)
 end
 
 local function loadProfile(player)
-    local data = {Level=1, XP=0, Gold=0, Class="Swordsman", Inventory={"TrainingBlade","NoviceArmor"}, Equipped={Weapon="TrainingBlade",Armor="NoviceArmor"}}
+    local data = {Level=1, XP=0, Gold=0, Class="Swordsman", Inventory={"TrainingBlade","NoviceArmor"}, Equipped={Weapon="TrainingBlade",Armor="NoviceArmor"}, SkillRanks={Swordsman={Power=0,Focus=0,Mastery=0},Mage={Power=0,Focus=0,Mastery=0},Archer={Power=0,Focus=0,Mastery=0}}}
     local ok, saved = pcall(function()
         return Store:GetAsync("Player_" .. player.UserId)
     end)
@@ -170,6 +190,15 @@ local function loadProfile(player)
         data.XP = math.max(0, tonumber(saved.XP) or 0)
         data.Gold = math.max(0, tonumber(saved.Gold) or 0)
         if Config.Classes[saved.Class] then data.Class = saved.Class end
+        if type(saved.SkillRanks)=="table" then
+            for className,classRanks in pairs(saved.SkillRanks) do
+                if Config.Classes[className] and type(classRanks)=="table" then
+                    for nodeName in pairs(Config.SkillTree.Nodes) do
+                        data.SkillRanks[className][nodeName]=math.clamp(math.floor(tonumber(classRanks[nodeName]) or 0),0,Config.SkillTree.MaxRank)
+                    end
+                end
+            end
+        end
         if type(saved.Inventory) == "table" then
             data.Inventory = {}
             for _, id in ipairs(saved.Inventory) do
@@ -195,6 +224,7 @@ local function loadProfile(player)
     local _, defense = getEquipmentBonuses(data)
     player:SetAttribute("EclipseDefense", defense)
     sendInventory(player)
+    sendSkillTree(player)
     refreshWeaponVisual(player)
     player.CharacterAdded:Connect(function()
         task.wait(0.7)
@@ -206,7 +236,7 @@ end
 local function saveProfile(player)
     local data = profiles[player]
     if not data then return end
-    local payload = {Level=data.Level,XP=data.XP,Gold=data.Gold,Class=data.Class,Inventory=data.Inventory,Equipped=data.Equipped}
+    local payload = {Level=data.Level,XP=data.XP,Gold=data.Gold,Class=data.Class,Inventory=data.Inventory,Equipped=data.Equipped,SkillRanks=data.SkillRanks}
     local ok, err = pcall(function()
         Store:UpdateAsync("Player_" .. player.UserId, function()
             return payload
@@ -800,6 +830,7 @@ SelectClass.OnServerEvent:Connect(function(player, className)
     player:SetAttribute("EclipseCombo", 0)
     comboState[player] = nil
     notify(player, "Class selected: " .. className)
+    sendSkillTree(player)
 end)
 
 Attack.OnServerEvent:Connect(function(player)
@@ -840,7 +871,9 @@ Attack.OnServerEvent:Connect(function(player)
     player:SetAttribute("EclipseCombo", state.Count)
 
     local weaponAttack = getEquipmentBonuses(data)
-    local damage = class.Damage + math.max(0, data.Level - 1) * 2 + weaponAttack
+    local ranks=getSkillRanks(data)
+    local powerMultiplier=1+(ranks.Power or 0)*0.05
+    local damage = math.floor((class.Damage + math.max(0, data.Level - 1) * 2 + weaponAttack)*powerMultiplier)
     if state.Count == 3 then
         damage = math.floor(damage * 1.5)
         notify(player, "3-HIT COMBO! Finisher!")
@@ -848,6 +881,36 @@ Attack.OnServerEvent:Connect(function(player)
         notify(player, class.DisplayName .. " hit for " .. damage .. " damage! Combo " .. state.Count .. "/3")
     end
     damageEnemy(player, target, damage)
+end)
+
+SkillTreeAction.OnServerEvent:Connect(function(player,action,nodeName)
+    local data=profiles[player]
+    if not data then return end
+    if action=="Request" then
+        sendSkillTree(player)
+        return
+    end
+    if action~="Upgrade" or type(nodeName)~="string" then return end
+    local node=Config.SkillTree.Nodes[nodeName]
+    if not node then return end
+    local ranks=getSkillRanks(data)
+    local rank=ranks[nodeName] or 0
+    if rank>=Config.SkillTree.MaxRank then
+        notify(player,node.Name.." is already max rank.")
+        sendSkillTree(player)
+        return
+    end
+    local cost=node.Costs[rank+1]
+    if not cost or data.Gold<cost then
+        notify(player,"Not enough Gold. Need "..tostring(cost or 0)..".")
+        sendSkillTree(player)
+        return
+    end
+    data.Gold-=cost
+    ranks[nodeName]=rank+1
+    syncStats(player)
+    sendSkillTree(player)
+    notify(player,node.Name.." upgraded to Rank "..tostring(rank+1).."!")
 end)
 
 UseSkill.OnServerEvent:Connect(function(player)
@@ -864,7 +927,8 @@ UseSkill.OnServerEvent:Connect(function(player)
         return
     end
     local energy = player:GetAttribute("EclipseEnergy") or Config.EnergyMax
-    local energyCost = class.SkillEnergyCost or 30
+    local ranks=getSkillRanks(data)
+    local energyCost=math.max(5,math.floor((class.SkillEnergyCost or 30)*(1-(ranks.Focus or 0)*0.05)))
     if energy < energyCost then
         notify(player, "Not enough energy! Need " .. energyCost .. " EN.")
         return
@@ -892,7 +956,8 @@ UseSkill.OnServerEvent:Connect(function(player)
     player:SetAttribute("EclipseEnergy", math.max(0,energy-energyCost))
     table.sort(targets, function(a, b) return a.Distance < b.Distance end)
     local weaponAttack = getEquipmentBonuses(data)
-    local damage = class.SkillDamage + math.max(0, data.Level - 1) * 3 + weaponAttack
+    local masteryMultiplier=1+(ranks.Mastery or 0)*0.08
+    local damage = math.floor((class.SkillDamage + math.max(0, data.Level - 1) * 3 + weaponAttack)*masteryMultiplier)
     if class.SkillMode == "Single" then
         local core = targets[1].Enemy:FindFirstChild("Core")
         playClassSkillEffect(player,class,core)
