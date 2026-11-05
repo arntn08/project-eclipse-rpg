@@ -9,6 +9,7 @@ GameConfig.XPPerEnemy = 25
 GameConfig.GoldPerEnemy = 10
 GameConfig.EnergyMax = 100
 GameConfig.EnergyRegenPerSecond = 8
+GameConfig.Ultimate = {ChargeMax=100, ChargePerHit=8, KillBonus=12, Cooldown=25, BuffDuration=8, BasicDamageMultiplier=1.5}
 
 GameConfig.Dungeon = {
     StageCount = 3,
@@ -47,6 +48,7 @@ GameConfig.Classes = {
         SkillCooldown = 8,
         SkillEnergyCost = 30,
         SkillMode = "Area",
+        UltimateName = "ECLIPSE BREAKER", UltimateDamage = 145, UltimateRange = 24,
         Color = Color3.fromRGB(70, 170, 255),
     },
     Mage = {
@@ -61,6 +63,7 @@ GameConfig.Classes = {
         SkillCooldown = 10,
         SkillEnergyCost = 40,
         SkillMode = "Area",
+        UltimateName = "ASTRAL CATACLYSM", UltimateDamage = 125, UltimateRange = 28,
         Color = Color3.fromRGB(190, 110, 255),
     },
     Archer = {
@@ -75,6 +78,7 @@ GameConfig.Classes = {
         SkillCooldown = 7,
         SkillEnergyCost = 25,
         SkillMode = "Single",
+        UltimateName = "CELESTIAL ARROW", UltimateDamage = 210, UltimateRange = 55,
         Color = Color3.fromRGB(100, 220, 150),
     },
 }
