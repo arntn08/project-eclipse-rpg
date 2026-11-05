@@ -353,6 +353,7 @@ end
 local checkDungeonWave
 
 local function addUltimateCharge(player,amount)
+    if player:GetAttribute("EclipseUltimateResolving") then return end
     local current=player:GetAttribute("EclipseUltimateCharge") or 0
     player:SetAttribute("EclipseUltimateCharge",math.clamp(current+amount,0,Config.Ultimate.ChargeMax))
 end
@@ -992,11 +993,13 @@ UltimateAction.OnServerEvent:Connect(function(player)
     local mastery=1+(ranks.Mastery or 0)*0.08
     local attackBonus=getEquipmentBonuses(data)
     local damage=math.floor((class.UltimateDamage+math.max(0,data.Level-1)*5+attackBonus)*mastery)
+    player:SetAttribute("EclipseUltimateResolving",true)
     if class.SkillMode=="Single" then
         damageEnemy(player,targets[1].Enemy,damage)
     else
         for _,target in ipairs(targets) do damageEnemy(player,target.Enemy,damage) end
     end
+    player:SetAttribute("EclipseUltimateResolving",false)
     notify(player,class.UltimateName.." unleashed! Damage boost active for "..Config.Ultimate.BuffDuration.."s!")
 end)
 
