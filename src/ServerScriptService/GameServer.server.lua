@@ -4,6 +4,7 @@ local DataStoreService = game:GetService("DataStoreService")
 local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("GameConfig"))
+local DungeonConfig = Config.Dungeon
 local Store = DataStoreService:GetDataStore(Config.DataStoreName)
 
 local remotes = ReplicatedStorage:FindFirstChild("EclipseRemotes") or Instance.new("Folder")
@@ -21,14 +22,33 @@ local SelectClass = getRemote("SelectClass")
 local Attack = getRemote("Attack")
 local UseSkill = getRemote("UseSkill")
 local Notify = getRemote("Notify")
+local DungeonUpdate = getRemote("DungeonUpdate")
 
 local profiles = {}
 local lastAttack = {}
 local lastSkill = {}
 local comboState = {}
+local dungeonStates = {}
+
 local enemiesFolder = Workspace:FindFirstChild("EclipseEnemies") or Instance.new("Folder")
 enemiesFolder.Name = "EclipseEnemies"
 enemiesFolder.Parent = Workspace
+
+local dungeonRoot = Workspace:FindFirstChild("PlayerDungeons") or Instance.new("Folder")
+dungeonRoot.Name = "PlayerDungeons"
+dungeonRoot.Parent = Workspace
+
+local function notify(player, message)
+    if player and player.Parent == Players then
+        Notify:FireClient(player, message)
+    end
+end
+
+local function updateDungeon(player, payload)
+    if player and player.Parent == Players then
+        DungeonUpdate:FireClient(player, payload)
+    end
+end
 
 local function makeLeaderstats(player, data)
     local stats = Instance.new("Folder")
@@ -51,6 +71,20 @@ local function syncStats(player)
     stats.Gold.Value = data.Gold
 end
 
+local function grantRewards(player, xp, gold)
+    local data = profiles[player]
+    if not data then return end
+    data.XP += xp
+    data.Gold += gold
+    while data.XP >= data.Level * 100 do
+        data.XP -= data.Level * 100
+        data.Level += 1
+        notify(player, "LEVEL UP! You reached Level " .. data.Level)
+    end
+    syncStats(player)
+    notify(player, "+" .. xp .. " XP  |  +" .. gold .. " Gold")
+end
+
 local function loadProfile(player)
     local data = {Level = 1, XP = 0, Gold = 0, Class = "Swordsman"}
     local ok, saved = pcall(function()
@@ -68,7 +102,7 @@ local function loadProfile(player)
     makeLeaderstats(player, data)
     player:SetAttribute("EclipseClass", data.Class)
     player:SetAttribute("EclipseCombo", 0)
-    Notify:FireClient(player, "Welcome to Project ECLIPSE, " .. data.Class .. "!")
+    notify(player, "Welcome to Project ECLIPSE, " .. data.Class .. "!")
 end
 
 local function saveProfile(player)
@@ -83,22 +117,94 @@ local function saveProfile(player)
     if not ok then warn("ECLIPSE: Data save failed for", player.Name, err) end
 end
 
-local function rewardPlayer(player)
-    local data = profiles[player]
-    if not data then return end
-    data.XP += Config.XPPerEnemy
-    data.Gold += Config.GoldPerEnemy
-    while data.XP >= data.Level * 100 do
-        data.XP -= data.Level * 100
-        data.Level += 1
-        Notify:FireClient(player, "LEVEL UP! You reached Level " .. data.Level)
-    end
-    syncStats(player)
-    Notify:FireClient(player, "+" .. Config.XPPerEnemy .. " XP  |  +" .. Config.GoldPerEnemy .. " Gold")
+local function createPart(parent, name, size, position, color, material)
+    local part = Instance.new("Part")
+    part.Name = name
+    part.Size = size
+    part.Position = position
+    part.Anchored = true
+    part.Color = color
+    part.Material = material or Enum.Material.Slate
+    part.TopSurface = Enum.SurfaceType.Smooth
+    part.BottomSurface = Enum.SurfaceType.Smooth
+    part.Parent = parent
+    return part
 end
 
+local function addHealthDisplay(core, health, maxHealth, title)
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "HealthDisplay"
+    billboard.Size = UDim2.fromOffset(170, 42)
+    billboard.StudsOffset = Vector3.new(0, core.Size.Y / 2 + 2, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Parent = core
+
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, 0, 0, 17)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.TextColor3 = Color3.new(1, 1, 1)
+    titleLabel.TextStrokeTransparency = 0.25
+    titleLabel.Font = Enum.Font.GothamBlack
+    titleLabel.TextSize = 12
+    titleLabel.Parent = billboard
+
+    local back = Instance.new("Frame")
+    back.Position = UDim2.fromOffset(0, 20)
+    back.Size = UDim2.new(1, 0, 0, 12)
+    back.BackgroundColor3 = Color3.fromRGB(35, 20, 30)
+    back.BorderSizePixel = 0
+    back.Parent = billboard
+
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.fromScale(1, 1)
+    fill.BackgroundColor3 = Color3.fromRGB(50, 220, 120)
+    fill.BorderSizePixel = 0
+    fill.Parent = back
+
+    local valueLabel = Instance.new("TextLabel")
+    valueLabel.Position = UDim2.fromOffset(0, 31)
+    valueLabel.Size = UDim2.new(1, 0, 0, 12)
+    valueLabel.BackgroundTransparency = 1
+    valueLabel.TextColor3 = Color3.new(1, 1, 1)
+    valueLabel.TextStrokeTransparency = 0.3
+    valueLabel.Font = Enum.Font.GothamBold
+    valueLabel.TextSize = 10
+    valueLabel.Parent = billboard
+
+    local function refresh(value)
+        local ratio = math.clamp(value / maxHealth, 0, 1)
+        fill.Size = UDim2.fromScale(ratio, 1)
+        valueLabel.Text = tostring(value) .. " / " .. tostring(maxHealth)
+        if ratio <= 0.3 then
+            fill.BackgroundColor3 = Color3.fromRGB(230, 55, 65)
+        elseif ratio <= 0.6 then
+            fill.BackgroundColor3 = Color3.fromRGB(245, 175, 55)
+        end
+    end
+    refresh(health.Value)
+    health.Changed:Connect(refresh)
+end
+
+local function getPlayerEnemyFolder(player)
+    local state = dungeonStates[player]
+    if state and state.Active then return state.EnemyFolder end
+    return enemiesFolder
+end
+
+local function countLivingEnemies(folder)
+    local count = 0
+    for _, enemy in ipairs(folder:GetChildren()) do
+        local health = enemy:FindFirstChild("Health")
+        if health and health.Value > 0 then count += 1 end
+    end
+    return count
+end
+
+local checkDungeonWave
+
 local function damageEnemy(player, enemy, amount)
-    if not enemy or not enemy.Parent then return false end
+    if not enemy or not enemy.Parent or enemy:GetAttribute("Defeated") then return false end
     local health = enemy:FindFirstChild("Health")
     if not health or health.Value <= 0 then return false end
     local tag = enemy:FindFirstChild("LastHitBy") or Instance.new("IntValue")
@@ -109,61 +215,250 @@ local function damageEnemy(player, enemy, amount)
     return true
 end
 
-local function createEnemy(position, index)
+local function createEnemy(parentFolder, position, name, healthAmount, isBoss, owner)
     local model = Instance.new("Model")
-    model.Name = "TrainingShade_" .. index
+    model.Name = name
+    model:SetAttribute("IsBoss", isBoss == true)
+    model:SetAttribute("OwnerUserId", owner and owner.UserId or 0)
 
-    local body = Instance.new("Part")
-    body.Name = "Core"
-    body.Shape = Enum.PartType.Ball
-    body.Size = Vector3.new(4, 4, 4)
-    body.Material = Enum.Material.Neon
-    body.Color = Color3.fromRGB(95, 35, 150)
-    body.Anchored = true
-    body.CanCollide = true
-    body.Position = position
-    body.Parent = model
+    local core = Instance.new("Part")
+    core.Name = "Core"
+    core.Shape = Enum.PartType.Ball
+    core.Size = isBoss and Vector3.new(10, 10, 10) or Vector3.new(4, 4, 4)
+    core.Material = Enum.Material.Neon
+    core.Color = isBoss and Color3.fromRGB(190, 35, 65) or Color3.fromRGB(95, 35, 150)
+    core.Anchored = true
+    core.CanCollide = true
+    core.Position = position
+    core.Parent = model
 
     local health = Instance.new("IntValue")
     health.Name = "Health"
-    health.Value = Config.EnemyHealth
+    health.Value = healthAmount
     health.Parent = model
-    model.PrimaryPart = body
+    model.PrimaryPart = core
 
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "HealthDisplay"
-    billboard.Size = UDim2.fromOffset(130, 28)
-    billboard.StudsOffset = Vector3.new(0, 3, 0)
-    billboard.AlwaysOnTop = true
-    billboard.Parent = body
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.fromScale(1, 1)
-    label.BackgroundColor3 = Color3.fromRGB(25, 15, 35)
-    label.BackgroundTransparency = 0.2
-    label.TextColor3 = Color3.new(1, 1, 1)
-    label.TextScaled = true
-    label.Font = Enum.Font.GothamBold
-    label.Text = tostring(health.Value) .. " / " .. tostring(Config.EnemyHealth)
-    label.Parent = billboard
+    addHealthDisplay(core, health, healthAmount, isBoss and "ECLIPSE OVERLORD" or name)
+    model.Parent = parentFolder
 
     health.Changed:Connect(function(value)
-        label.Text = tostring(value) .. " / " .. tostring(Config.EnemyHealth)
-    end)
+        if value > 0 or model:GetAttribute("Defeated") then return end
+        model:SetAttribute("Defeated", true)
 
-    model.Parent = enemiesFolder
-    health.Changed:Connect(function(value)
-        if value <= 0 and model.Parent then
-            local tag = model:FindFirstChild("LastHitBy")
-            local killer = tag and Players:GetPlayerByUserId(tag.Value)
-            if killer then rewardPlayer(killer) end
-            model:Destroy()
+        local tag = model:FindFirstChild("LastHitBy")
+        local killer = tag and Players:GetPlayerByUserId(tag.Value)
+        if killer then
+            if isBoss then
+                grantRewards(killer, 200, 100)
+            else
+                grantRewards(killer, Config.XPPerEnemy, Config.GoldPerEnemy)
+            end
+        end
+
+        model:Destroy()
+        if owner and checkDungeonWave then
+            task.defer(checkDungeonWave, owner)
+        elseif not isBoss then
             task.delay(Config.EnemyRespawnSeconds, function()
-                if enemiesFolder.Parent then createEnemy(position, index) end
+                if enemiesFolder.Parent then
+                    createEnemy(enemiesFolder, position, name, Config.EnemyHealth, false, nil)
+                end
             end)
         end
     end)
+
+    if isBoss and owner then
+        task.spawn(function()
+            while model.Parent and health.Value > 0 do
+                task.wait(DungeonConfig.BossAttackInterval)
+                if not model.Parent or health.Value <= 0 then break end
+                local character = owner.Character
+                local root = character and character:FindFirstChild("HumanoidRootPart")
+                local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+                if root and humanoid and humanoid.Health > 0 then
+                    if (root.Position - core.Position).Magnitude <= DungeonConfig.BossAttackRange then
+                        humanoid:TakeDamage(DungeonConfig.BossDamage)
+                        notify(owner, "OVERLORD PULSE! -" .. DungeonConfig.BossDamage .. " HP")
+                        local pulse = Instance.new("Part")
+                        pulse.Name = "BossPulseEffect"
+                        pulse.Shape = Enum.PartType.Ball
+                        pulse.Size = Vector3.new(2, 2, 2)
+                        pulse.Position = core.Position
+                        pulse.Anchored = true
+                        pulse.CanCollide = false
+                        pulse.Material = Enum.Material.Neon
+                        pulse.Color = Color3.fromRGB(255, 55, 85)
+                        pulse.Transparency = 0.35
+                        pulse.Parent = parentFolder
+                        task.spawn(function()
+                            for step = 1, 8 do
+                                if not pulse.Parent then break end
+                                pulse.Size += Vector3.new(2, 2, 2)
+                                pulse.Transparency = math.min(0.95, pulse.Transparency + 0.07)
+                                task.wait(0.05)
+                            end
+                            pulse:Destroy()
+                        end)
+                    end
+                end
+            end
+        end)
+    end
+
     return model
+end
+
+local function makeDungeonRoom(player)
+    local folder = Instance.new("Folder")
+    folder.Name = "Dungeon_" .. player.UserId
+    folder.Parent = dungeonRoot
+
+    local slot = player.UserId % 1000
+    local origin = Vector3.new(slot * 180, 0, 500)
+    local room = Instance.new("Folder")
+    room.Name = "Room"
+    room.Parent = folder
+
+    createPart(room, "DungeonFloor", Vector3.new(100, 2, 100), origin + Vector3.new(0, -1, 0), Color3.fromRGB(19, 20, 36), Enum.Material.Slate)
+    createPart(room, "NorthWall", Vector3.new(100, 24, 3), origin + Vector3.new(0, 11, -50), Color3.fromRGB(35, 28, 58), Enum.Material.Basalt)
+    createPart(room, "SouthWall", Vector3.new(100, 24, 3), origin + Vector3.new(0, 11, 50), Color3.fromRGB(35, 28, 58), Enum.Material.Basalt)
+    createPart(room, "WestWall", Vector3.new(3, 24, 100), origin + Vector3.new(-50, 11, 0), Color3.fromRGB(35, 28, 58), Enum.Material.Basalt)
+    createPart(room, "EastWall", Vector3.new(3, 24, 100), origin + Vector3.new(50, 11, 0), Color3.fromRGB(35, 28, 58), Enum.Material.Basalt)
+
+    local gate = createPart(room, "EclipseGate", Vector3.new(12, 18, 2), origin + Vector3.new(0, 8, -43), Color3.fromRGB(30, 145, 220), Enum.Material.Neon)
+    gate.Transparency = 0.2
+    gate.CanCollide = false
+
+    local enemies = Instance.new("Folder")
+    enemies.Name = "Enemies"
+    enemies.Parent = folder
+
+    return folder, enemies, origin
+end
+
+local function sendDungeonProgress(player, state, message)
+    updateDungeon(player, {
+        Mode = "Progress",
+        Stage = state.Stage,
+        StageCount = DungeonConfig.StageCount,
+        Wave = state.Wave,
+        WaveCount = DungeonConfig.WavesPerStage,
+        Message = message or "Defeat all enemies!",
+        Boss = state.BossActive,
+    })
+end
+
+local function spawnDungeonWave(player)
+    local state = dungeonStates[player]
+    if not state or not state.Active then return end
+    state.Transitioning = false
+    state.BossActive = state.Stage == DungeonConfig.StageCount and state.Wave == DungeonConfig.WavesPerStage
+
+    if state.BossActive then
+        createEnemy(
+            state.EnemyFolder,
+            state.Origin + Vector3.new(0, 6, -10),
+            "EclipseOverlord",
+            DungeonConfig.BossHealth,
+            true,
+            player
+        )
+        sendDungeonProgress(player, state, "BOSS ENCOUNTER: THE ECLIPSE OVERLORD")
+        notify(player, "A powerful presence has appeared...")
+        return
+    end
+
+    local amount = DungeonConfig.BaseEnemiesPerWave + (state.Stage - 1) * DungeonConfig.ExtraEnemiesPerStage
+    for index = 1, amount do
+        local x = ((index - 1) - (amount - 1) / 2) * 12
+        local z = -12 - ((index % 2) * 8)
+        createEnemy(
+            state.EnemyFolder,
+            state.Origin + Vector3.new(x, 3, z),
+            "DungeonShade",
+            Config.EnemyHealth + (state.Stage - 1) * 20,
+            false,
+            player
+        )
+    end
+    sendDungeonProgress(player, state, "Wave " .. state.Wave .. ": eliminate every Shade!")
+    notify(player, "DUNGEON WAVE " .. state.Wave .. " — Stage " .. state.Stage)
+end
+
+local function finishDungeon(player)
+    local state = dungeonStates[player]
+    if not state or not state.Active then return end
+    state.Active = false
+    grantRewards(player, DungeonConfig.FinalClearXP, DungeonConfig.FinalClearGold)
+    notify(player, "DUNGEON CLEARED! The gate is opening.")
+    updateDungeon(player, {Mode = "Complete", Message = "DUNGEON CLEARED", XP = DungeonConfig.FinalClearXP, Gold = DungeonConfig.FinalClearGold})
+
+    local character = player.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if root then root.CFrame = CFrame.new(0, 5, 25) end
+
+    task.delay(5, function()
+        if state.Folder and state.Folder.Parent then state.Folder:Destroy() end
+        if dungeonStates[player] == state then dungeonStates[player] = nil end
+        updateDungeon(player, {Mode = "Hidden"})
+    end)
+end
+
+checkDungeonWave = function(player)
+    local state = dungeonStates[player]
+    if not state or not state.Active or state.Transitioning then return end
+    if countLivingEnemies(state.EnemyFolder) > 0 then return end
+
+    state.Transitioning = true
+    if state.BossActive then
+        finishDungeon(player)
+        return
+    end
+
+    grantRewards(player, DungeonConfig.StageClearXP, DungeonConfig.StageClearGold)
+    notify(player, "WAVE CLEARED! Bonus rewards earned.")
+    task.delay(2, function()
+        if not state.Active then return end
+        if state.Wave < DungeonConfig.WavesPerStage then
+            state.Wave += 1
+        elseif state.Stage < DungeonConfig.StageCount then
+            state.Stage += 1
+            state.Wave = 1
+        else
+            finishDungeon(player)
+            return
+        end
+        spawnDungeonWave(player)
+    end)
+end
+
+local function enterDungeon(player)
+    if dungeonStates[player] and dungeonStates[player].Active then
+        notify(player, "You are already inside a dungeon.")
+        return
+    end
+    local character = player.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if not root then
+        notify(player, "Your character is still loading.")
+        return
+    end
+
+    local folder, enemyFolder, origin = makeDungeonRoom(player)
+    local state = {
+        Active = true,
+        Transitioning = false,
+        Stage = 1,
+        Wave = 1,
+        BossActive = false,
+        Folder = folder,
+        EnemyFolder = enemyFolder,
+        Origin = origin,
+    }
+    dungeonStates[player] = state
+    root.CFrame = CFrame.new(origin + Vector3.new(0, 5, 28))
+    updateDungeon(player, {Mode = "Show"})
+    spawnDungeonWave(player)
 end
 
 local function createArena()
@@ -172,14 +467,7 @@ local function createArena()
     arena.Name = "EclipseArena"
     arena.Parent = Workspace
 
-    local floor = Instance.new("Part")
-    floor.Name = "ArenaFloor"
-    floor.Size = Vector3.new(120, 2, 90)
-    floor.Position = Vector3.new(0, -1, 0)
-    floor.Anchored = true
-    floor.Material = Enum.Material.Slate
-    floor.Color = Color3.fromRGB(24, 27, 42)
-    floor.Parent = arena
+    createPart(arena, "ArenaFloor", Vector3.new(120, 2, 90), Vector3.new(0, -1, 0), Color3.fromRGB(24, 27, 42), Enum.Material.Slate)
 
     local spawn = Instance.new("SpawnLocation")
     spawn.Name = "EclipseSpawn"
@@ -190,10 +478,30 @@ local function createArena()
     spawn.Color = Color3.fromRGB(40, 150, 220)
     spawn.Parent = arena
 
-    for i = 1, 4 do
-        local x = (i - 2.5) * 18
-        createEnemy(Vector3.new(x, 3, -12), i)
+    for index = 1, 4 do
+        local x = (index - 2.5) * 18
+        createEnemy(enemiesFolder, Vector3.new(x, 3, -12), "TrainingShade", Config.EnemyHealth, false, nil)
     end
+
+    local portal = createPart(arena, "DungeonPortal", Vector3.new(12, 16, 2), Vector3.new(0, 8, -34), Color3.fromRGB(20, 145, 255), Enum.Material.Neon)
+    portal.Transparency = 0.18
+    portal.CanCollide = false
+
+    local light = Instance.new("PointLight")
+    light.Color = Color3.fromRGB(40, 160, 255)
+    light.Range = 24
+    light.Brightness = 2
+    light.Parent = portal
+
+    local prompt = Instance.new("ProximityPrompt")
+    prompt.ActionText = "Enter Dungeon"
+    prompt.ObjectText = "ECLIPSE GATE"
+    prompt.KeyboardKeyCode = Enum.KeyCode.E
+    prompt.HoldDuration = 0.5
+    prompt.MaxActivationDistance = 14
+    prompt.RequiresLineOfSight = false
+    prompt.Parent = portal
+    prompt.Triggered:Connect(enterDungeon)
 end
 
 SelectClass.OnServerEvent:Connect(function(player, className)
@@ -204,7 +512,7 @@ SelectClass.OnServerEvent:Connect(function(player, className)
     player:SetAttribute("EclipseClass", className)
     player:SetAttribute("EclipseCombo", 0)
     comboState[player] = nil
-    Notify:FireClient(player, "Class selected: " .. className)
+    notify(player, "Class selected: " .. className)
 end)
 
 Attack.OnServerEvent:Connect(function(player)
@@ -218,8 +526,9 @@ Attack.OnServerEvent:Connect(function(player)
     if not data or not root then return end
 
     local class = Config.Classes[data.Class] or Config.Classes.Swordsman
+    local folder = getPlayerEnemyFolder(player)
     local target, nearest = nil, class.Range
-    for _, enemy in ipairs(enemiesFolder:GetChildren()) do
+    for _, enemy in ipairs(folder:GetChildren()) do
         local core = enemy:FindFirstChild("Core")
         local health = enemy:FindFirstChild("Health")
         if core and health and health.Value > 0 then
@@ -232,7 +541,7 @@ Attack.OnServerEvent:Connect(function(player)
     end
 
     if not target then
-        Notify:FireClient(player, "No enemy in range.")
+        notify(player, "No enemy in range.")
         return
     end
 
@@ -246,12 +555,11 @@ Attack.OnServerEvent:Connect(function(player)
     local damage = class.Damage + math.max(0, data.Level - 1) * 2
     if state.Count == 3 then
         damage = math.floor(damage * 1.5)
-        Notify:FireClient(player, "3-HIT COMBO! Finisher!")
+        notify(player, "3-HIT COMBO! Finisher!")
+    else
+        notify(player, class.DisplayName .. " hit for " .. damage .. " damage! Combo " .. state.Count .. "/3")
     end
     damageEnemy(player, target, damage)
-    if state.Count ~= 3 then
-        Notify:FireClient(player, class.DisplayName .. " hit for " .. damage .. " damage! Combo " .. state.Count .. "/3")
-    end
 end)
 
 UseSkill.OnServerEvent:Connect(function(player)
@@ -264,13 +572,13 @@ UseSkill.OnServerEvent:Connect(function(player)
     local class = Config.Classes[data.Class] or Config.Classes.Swordsman
     local readyAt = lastSkill[player] or 0
     if now < readyAt then
-        Notify:FireClient(player, "Skill recharging: " .. math.ceil(readyAt - now) .. "s")
+        notify(player, "Skill recharging: " .. math.ceil(readyAt - now) .. "s")
         return
     end
-    lastSkill[player] = now + class.SkillCooldown
 
+    local folder = getPlayerEnemyFolder(player)
     local targets = {}
-    for _, enemy in ipairs(enemiesFolder:GetChildren()) do
+    for _, enemy in ipairs(folder:GetChildren()) do
         local core = enemy:FindFirstChild("Core")
         local health = enemy:FindFirstChild("Health")
         if core and health and health.Value > 0 then
@@ -282,25 +590,29 @@ UseSkill.OnServerEvent:Connect(function(player)
     end
 
     if #targets == 0 then
-        lastSkill[player] = now
-        Notify:FireClient(player, "No enemy close enough for " .. class.SkillName .. ".")
+        notify(player, "No enemy close enough for " .. class.SkillName .. ".")
         return
     end
 
+    lastSkill[player] = now + class.SkillCooldown
     table.sort(targets, function(a, b) return a.Distance < b.Distance end)
+    local damage = class.SkillDamage + math.max(0, data.Level - 1) * 3
     if class.SkillMode == "Single" then
-        damageEnemy(player, targets[1].Enemy, class.SkillDamage + math.max(0, data.Level - 1) * 3)
+        damageEnemy(player, targets[1].Enemy, damage)
     else
         for _, target in ipairs(targets) do
-            damageEnemy(player, target.Enemy, class.SkillDamage + math.max(0, data.Level - 1) * 3)
+            damageEnemy(player, target.Enemy, damage)
         end
     end
-    Notify:FireClient(player, class.SkillName .. " activated! Cooldown: " .. class.SkillCooldown .. "s")
+    notify(player, class.SkillName .. " activated!")
 end)
 
 Players.PlayerAdded:Connect(loadProfile)
 Players.PlayerRemoving:Connect(function(player)
     saveProfile(player)
+    local state = dungeonStates[player]
+    if state and state.Folder then state.Folder:Destroy() end
+    dungeonStates[player] = nil
     profiles[player] = nil
     lastAttack[player] = nil
     lastSkill[player] = nil
@@ -314,3 +626,6 @@ game:BindToClose(function()
 end)
 
 createArena()
+for _, player in ipairs(Players:GetPlayers()) do
+    task.spawn(loadProfile, player)
+end
