@@ -445,5 +445,37 @@ end
 if player.Character then task.spawn(bindVitality,player.Character) end
 player.CharacterAdded:Connect(bindVitality)
 
+-- Class energy HUD
+local energyPanel=rounded(make("Frame",{
+    Name="EnergyPanel",Size=UDim2.fromOffset(220,42),
+    Position=UDim2.new(0,16,1,-168),BackgroundColor3=Color3.fromRGB(10,15,28),
+    BackgroundTransparency=0.12,BorderSizePixel=0,
+},gui),9)
+make("UIStroke",{Color=Color3.fromRGB(145,95,230),Thickness=1.2},energyPanel)
+local energyLabel=make("TextLabel",{
+    Size=UDim2.new(1,-16,0,16),Position=UDim2.fromOffset(8,2),
+    BackgroundTransparency=1,Text="ENERGY 100 / 100",TextColor3=Color3.fromRGB(220,205,255),
+    Font=Enum.Font.GothamBlack,TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,
+},energyPanel)
+local energyBack=make("Frame",{
+    Size=UDim2.new(1,-16,0,12),Position=UDim2.fromOffset(8,24),
+    BackgroundColor3=Color3.fromRGB(45,30,65),BorderSizePixel=0,
+},energyPanel)
+rounded(energyBack,5)
+local energyFill=make("Frame",{
+    Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(155,90,245),BorderSizePixel=0,
+},energyBack)
+rounded(energyFill,5)
+local function refreshEnergy()
+    local value=player:GetAttribute("EclipseEnergy") or 0
+    local maximum=player:GetAttribute("EclipseEnergyMax") or Config.EnergyMax or 100
+    local ratio=math.clamp(value/math.max(1,maximum),0,1)
+    energyFill.Size=UDim2.fromScale(ratio,1)
+    energyLabel.Text=string.format("ENERGY  %d / %d",math.floor(value),maximum)
+end
+player:GetAttributeChangedSignal("EclipseEnergy"):Connect(refreshEnergy)
+player:GetAttributeChangedSignal("EclipseEnergyMax"):Connect(refreshEnergy)
+refreshEnergy()
+
 local initialClass = player:GetAttribute("EclipseClass") or "Swordsman"
 skillButton.Text = Config.Classes[initialClass].SkillName .. "\nQ"
