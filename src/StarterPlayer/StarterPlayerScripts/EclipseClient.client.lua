@@ -14,6 +14,7 @@ local InventoryAction = remotes:WaitForChild("InventoryAction")
 local InventoryUpdate = remotes:WaitForChild("InventoryUpdate")
 local SkillTreeAction = remotes:WaitForChild("SkillTreeAction")
 local SkillTreeUpdate = remotes:WaitForChild("SkillTreeUpdate")
+local UltimateAction = remotes:WaitForChild("UltimateAction")
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "EclipseHUD"
@@ -532,6 +533,59 @@ local function bindVitality(character)
 end
 if player.Character then task.spawn(bindVitality,player.Character) end
 player.CharacterAdded:Connect(bindVitality)
+
+-- Ultimate transformation controls
+local ultimatePanel=rounded(make("Frame",{
+    Name="UltimatePanel",Size=UDim2.fromOffset(220,48),
+    Position=UDim2.new(0,16,1,-222),BackgroundColor3=Color3.fromRGB(15,12,32),
+    BorderSizePixel=0,
+},gui),9)
+make("UIStroke",{Color=Color3.fromRGB(100,205,255),Thickness=1.5},ultimatePanel)
+local ultimateLabel=make("TextLabel",{
+    Size=UDim2.new(1,-12,0,15),Position=UDim2.fromOffset(6,2),
+    BackgroundTransparency=1,Text="ULTIMATE 0 / 100",
+    TextColor3=Color3.fromRGB(205,225,255),TextSize=10,Font=Enum.Font.GothamBlack,
+    TextXAlignment=Enum.TextXAlignment.Left,
+},ultimatePanel)
+local ultimateBack=make("Frame",{
+    Size=UDim2.new(1,-12,0,10),Position=UDim2.fromOffset(6,20),
+    BackgroundColor3=Color3.fromRGB(35,30,60),BorderSizePixel=0,
+},ultimatePanel)
+rounded(ultimateBack,5)
+local ultimateFill=make("Frame",{
+    Size=UDim2.fromScale(0,1),BackgroundColor3=Color3.fromRGB(70,190,255),
+    BorderSizePixel=0,
+},ultimateBack)
+rounded(ultimateFill,5)
+local ultimateButton=rounded(make("TextButton",{
+    Name="UltimateButton",Size=UDim2.fromOffset(112,48),
+    Position=UDim2.new(1,-132,1,-238),BackgroundColor3=Color3.fromRGB(45,75,125),
+    Text="ULTIMATE\nCHARGING",TextColor3=Color3.new(1,1,1),TextSize=11,
+    TextWrapped=true,Font=Enum.Font.GothamBlack,Active=false,
+},gui),10)
+local ultimateReady=false
+local function refreshUltimate()
+    local charge=player:GetAttribute("EclipseUltimateCharge") or 0
+    local maximum=100
+    ultimateFill.Size=UDim2.fromScale(math.clamp(charge/maximum,0,1),1)
+    ultimateLabel.Text=string.format("ULTIMATE %d / %d",charge,maximum)
+    ultimateReady=charge>=maximum
+    if ultimateReady then
+        ultimateButton.Text="UNLEASH\nULTIMATE"
+        ultimateButton.BackgroundColor3=Color3.fromRGB(35,130,180)
+        ultimateButton.Active=true
+    else
+        local className=player:GetAttribute("EclipseClass") or "Swordsman"
+        ultimateButton.Text=Config.Classes[className].UltimateName.."\nCHARGING"
+        ultimateButton.BackgroundColor3=Color3.fromRGB(45,55,85)
+        ultimateButton.Active=false
+    end
+end
+player:GetAttributeChangedSignal("EclipseUltimateCharge"):Connect(refreshUltimate)
+player:GetAttributeChangedSignal("EclipseClass"):Connect(refreshUltimate)
+ultimateButton.Activated:Connect(function()
+    if ultimateReady then UltimateAction:FireServer() end
+end)
 
 -- Class energy HUD
 local energyPanel=rounded(make("Frame",{
