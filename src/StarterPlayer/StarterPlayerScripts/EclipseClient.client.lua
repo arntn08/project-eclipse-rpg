@@ -407,5 +407,43 @@ end)
 closeInventory.Activated:Connect(function() inventoryPanel.Visible=false end)
 InventoryUpdate.OnClientEvent:Connect(renderInventory)
 
+-- Hunter vitality HUD
+local vitalityPanel = rounded(make("Frame",{
+    Name="VitalityPanel",Size=UDim2.fromOffset(220,48),
+    Position=UDim2.new(0,16,1,-118),BackgroundColor3=Color3.fromRGB(10,15,28),
+    BackgroundTransparency=0.12,BorderSizePixel=0,
+},gui),9)
+make("UIStroke",{Color=Color3.fromRGB(65,185,220),Thickness=1.2},vitalityPanel)
+local vitalityLabel=make("TextLabel",{
+    Size=UDim2.new(1,-16,0,18),Position=UDim2.fromOffset(8,3),
+    BackgroundTransparency=1,Text="HUNTER VITALITY",TextColor3=Color3.fromRGB(220,235,255),
+    Font=Enum.Font.GothamBlack,TextSize=11,TextXAlignment=Enum.TextXAlignment.Left,
+},vitalityPanel)
+local vitalityBack=make("Frame",{
+    Size=UDim2.new(1,-16,0,13),Position=UDim2.fromOffset(8,27),
+    BackgroundColor3=Color3.fromRGB(65,25,40),BorderSizePixel=0,
+},vitalityPanel)
+rounded(vitalityBack,5)
+local vitalityFill=make("Frame",{
+    Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(45,210,125),BorderSizePixel=0,
+},vitalityBack)
+rounded(vitalityFill,5)
+
+local function bindVitality(character)
+    local humanoid=character:WaitForChild("Humanoid",10)
+    if not humanoid then return end
+    local function refreshVitality()
+        local ratio=math.clamp(humanoid.Health/math.max(1,humanoid.MaxHealth),0,1)
+        vitalityFill.Size=UDim2.fromScale(ratio,1)
+        vitalityLabel.Text=string.format("HP  %d / %d",math.ceil(humanoid.Health),math.ceil(humanoid.MaxHealth))
+        vitalityFill.BackgroundColor3=ratio<=0.25 and Color3.fromRGB(235,55,70) or (ratio<=0.55 and Color3.fromRGB(245,170,55) or Color3.fromRGB(45,210,125))
+    end
+    humanoid.HealthChanged:Connect(refreshVitality)
+    humanoid:GetPropertyChangedSignal("MaxHealth"):Connect(refreshVitality)
+    refreshVitality()
+end
+if player.Character then task.spawn(bindVitality,player.Character) end
+player.CharacterAdded:Connect(bindVitality)
+
 local initialClass = player:GetAttribute("EclipseClass") or "Swordsman"
 skillButton.Text = Config.Classes[initialClass].SkillName .. "\nQ"
