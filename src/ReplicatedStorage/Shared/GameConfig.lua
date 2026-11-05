@@ -8,6 +8,21 @@ GameConfig.EnemyRespawnSeconds = 4
 GameConfig.XPPerEnemy = 25
 GameConfig.GoldPerEnemy = 10
 
+GameConfig.Dungeon = {
+    StageCount = 3,
+    WavesPerStage = 2,
+    BaseEnemiesPerWave = 2,
+    ExtraEnemiesPerStage = 1,
+    BossHealth = 450,
+    BossDamage = 15,
+    BossAttackRange = 24,
+    BossAttackInterval = 3.5,
+    StageClearXP = 100,
+    StageClearGold = 50,
+    FinalClearXP = 500,
+    FinalClearGold = 250,
+}
+
 GameConfig.Classes = {
     Swordsman = {
         DisplayName = "Swordsman",
