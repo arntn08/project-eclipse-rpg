@@ -586,6 +586,7 @@ player:GetAttributeChangedSignal("EclipseClass"):Connect(refreshUltimate)
 ultimateButton.Activated:Connect(function()
     if ultimateReady then UltimateAction:FireServer() end
 end)
+refreshUltimate()
 
 -- Class energy HUD
 local energyPanel=rounded(make("Frame",{
