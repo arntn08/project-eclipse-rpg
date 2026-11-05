@@ -14,6 +14,11 @@ A mobile-first anime action RPG for Roblox.
 - Common, Rare, and Epic equipment
 - Dungeon enemy and boss loot drops
 - Equipment bonuses applied to combat damage
+- Basic Shade enemy AI that pursues and attacks nearby hunters
+- Boss and enemy attack warning zones with dodge windows
+- Floating damage numbers on successful hits
+- Equipped weapon visuals attached to the character's hand
+- Mobile hunter vitality bar with live HP updates
 - Level requirements and selling unequipped items
 
 ## Starter equipment
@@ -38,11 +43,11 @@ Publish the experience before testing persistent DataStores. Enable **Game Setti
 - Inventory lets you equip items or sell unequipped items.
 
 ## Development status
-This is an early prototype. Arena, dungeon, enemies, and boss visuals use placeholder Parts. The source has been committed to GitHub but has not been validated in a Roblox Studio playtest. Test all gameplay and saving before public release.
+This is an early prototype. Arena, dungeon, enemies, and boss visuals use placeholder Parts. The source has been committed to GitHub but has not been validated in a Roblox Studio playtest. Enemy movement and attack timing, weapon attachment alignment, warning-zone placement, and mobile HUD layout still require Studio testing. Test all gameplay and saving before public release.
 
 ## Next milestones
-1. Character rigs, class animations, and combat effects
-2. Enemy AI and boss telegraphs
-3. Quests, achievements, and more dungeon themes
-4. Party dungeons and multiplayer rewards
-5. Polished character and progression menus
+1. Class-specific animation assets and polished weapon models
+2. Quests, achievements, and more dungeon themes
+3. Party dungeons and multiplayer rewards
+4. Skill trees, stamina, and progression menus
+5. Character customization and polished environments
