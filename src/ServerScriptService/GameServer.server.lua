@@ -344,8 +344,10 @@ local function createEnemy(parentFolder, position, name, healthAmount, isBoss, o
                 local humanoid = character and character:FindFirstChildOfClass("Humanoid")
                 if root and humanoid and humanoid.Health > 0 then
                     if (root.Position - core.Position).Magnitude <= DungeonConfig.BossAttackRange then
-                        humanoid:TakeDamage(DungeonConfig.BossDamage)
-                        notify(owner, "OVERLORD PULSE! -" .. DungeonConfig.BossDamage .. " HP")
+                        local _, defense = getEquipmentBonuses(profiles[owner] or {})
+                        local actualDamage = math.max(1, DungeonConfig.BossDamage - math.floor(defense * 0.25))
+                        humanoid:TakeDamage(actualDamage)
+                        notify(owner, "OVERLORD PULSE! -" .. actualDamage .. " HP")
                         local pulse = Instance.new("Part")
                         pulse.Name = "BossPulseEffect"
                         pulse.Shape = Enum.PartType.Ball
