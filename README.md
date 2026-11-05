@@ -33,6 +33,12 @@ Open the link in Chrome or another modern browser. Choose a class and tap **Ente
 | Dash | DASH | Shift |
 | Menus | Bottom navigation | Touch/click |
 
+## Animated hunter artwork
+
+The Alpha 0.3 renderer now supports a 4×4 animated anime hunter sprite sheet. The game loads it from the repository-root file `eclipse-hunter.webp`; if that file is not present yet, it automatically falls back to the built-in canvas character.
+
+To enable the new artwork, upload the supplied `eclipse-hunter.webp` file to the repository root (same level as `index.html`) and commit it. The rows are idle, run, attack, and skill/ultimate animations, with four frames per row.
+
 ## Save data
 
 Progress is stored in browser localStorage on the current browser and device. It does not yet sync between devices or use a cloud account. Clearing site data can erase progress.
