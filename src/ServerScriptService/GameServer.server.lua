@@ -242,6 +242,9 @@ local function createEnemy(parentFolder, position, name, healthAmount, isBoss, o
     model.Parent = parentFolder
 
     health.Changed:Connect(function(value)
+        if isBoss and owner then
+            updateDungeon(owner, {Mode = "BossHealth", Ratio = value / healthAmount})
+        end
         if value > 0 or model:GetAttribute("Defeated") then return end
         model:SetAttribute("Defeated", true)
 
