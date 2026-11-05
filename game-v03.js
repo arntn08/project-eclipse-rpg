@@ -2,7 +2,7 @@
 const $=id=>document.getElementById(id),cv=$("arena"),c=cv.getContext("2d"),clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),rnd=(a,b)=>a+Math.random()*(b-a),W=()=>cv.clientWidth,H=()=>cv.clientHeight,G=()=>H()*.78;
 const classes={Swordsman:{hp:160,dmg:26,range:100,cost:34,skill:"PHANTOM SLASH",ult:"ECLIPSE BREAKER",color:"#68e5ff",speed:245,cd:4},Mage:{hp:118,dmg:21,range:215,cost:42,skill:"ASTRAL BURST",ult:"ASTRAL CATACLYSM",color:"#c69aff",speed:225,cd:5},Archer:{hp:130,dmg:19,range:250,cost:28,skill:"RIFT ARROW",ult:"CELESTIAL RAIN",color:"#9af0c0",speed:260,cd:3.6}};
 const fresh=()=>({level:1,xp:0,gold:0,kills:0,weapon:"Training Blade",armor:"Novice Armor",attackBonus:4,defense:5,skillRanks:0,dailyClaimed:false});
-let save;try{save={...fresh(),...JSON.parse(localStorage.getItem("eclipse-alpha03")||"{}")}}catch{save=fresh()}
+let save;try{save={...fresh(),...JSON.parse(localStorage.getItem("eclipse-alpha03")||localStorage.getItem("eclipse-alpha02")||"{}")}}catch{save=fresh()}
 let chosen="Swordsman",p=null,foes=[],boss=null,stage=1,kills=0,target=6,energy=100,ult=0,running=false,last=0,keys={},joy={x:0,y:0},joyId=null,held=false,camera=0,particles=[],toast=0,shake=0,combo=0,comboTime=0,transition=false;
 function persist(){try{localStorage.setItem("eclipse-alpha03",JSON.stringify(save))}catch{}$("gold").textContent=save.gold;$("level").textContent=save.level}
 function say(t){$("toast").textContent=t;toast=2}
