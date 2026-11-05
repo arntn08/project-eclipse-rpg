@@ -3,7 +3,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DataStoreService = game:GetService("DataStoreService")
 local Workspace = game:GetService("Workspace")
 
-local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("GameConfig"))
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("GameConfig"))
+local ItemConfig = require(Shared:WaitForChild("ItemConfig"))
 local DungeonConfig = Config.Dungeon
 local Store = DataStoreService:GetDataStore(Config.DataStoreName)
 
@@ -23,6 +25,8 @@ local Attack = getRemote("Attack")
 local UseSkill = getRemote("UseSkill")
 local Notify = getRemote("Notify")
 local DungeonUpdate = getRemote("DungeonUpdate")
+local InventoryAction = getRemote("InventoryAction")
+local InventoryUpdate = getRemote("InventoryUpdate")
 
 local profiles = {}
 local lastAttack = {}
@@ -48,6 +52,31 @@ local function updateDungeon(player, payload)
     if player and player.Parent == Players then
         DungeonUpdate:FireClient(player, payload)
     end
+end
+
+local function sendInventory(player)
+    local data = profiles[player]
+    if not data then return end
+    local items = {}
+    for _, id in ipairs(data.Inventory) do
+        local item = ItemConfig.Items[id]
+        if item then
+            table.insert(items, {Id=id,Name=item.Name,Slot=item.Slot,Rarity=item.Rarity,Attack=item.Attack,Defense=item.Defense,Level=item.Level,SellValue=item.SellValue,Description=item.Description})
+        end
+    end
+    InventoryUpdate:FireClient(player, {Items=items, Equipped=data.Equipped})
+end
+
+local function getEquipmentBonuses(data)
+    local attack, defense = 0, 0
+    for slot, id in pairs(data.Equipped) do
+        local item = ItemConfig.Items[id]
+        if item and item.Slot == slot then
+            attack += item.Attack
+            defense += item.Defense
+        end
+    end
+    return attack, defense
 end
 
 local function makeLeaderstats(player, data)
@@ -86,7 +115,7 @@ local function grantRewards(player, xp, gold)
 end
 
 local function loadProfile(player)
-    local data = {Level = 1, XP = 0, Gold = 0, Class = "Swordsman"}
+    local data = {Level=1, XP=0, Gold=0, Class="Swordsman", Inventory={"TrainingBlade","NoviceArmor"}, Equipped={Weapon="TrainingBlade",Armor="NoviceArmor"}}
     local ok, saved = pcall(function()
         return Store:GetAsync("Player_" .. player.UserId)
     end)
@@ -95,6 +124,19 @@ local function loadProfile(player)
         data.XP = math.max(0, tonumber(saved.XP) or 0)
         data.Gold = math.max(0, tonumber(saved.Gold) or 0)
         if Config.Classes[saved.Class] then data.Class = saved.Class end
+        if type(saved.Inventory) == "table" then
+            data.Inventory = {}
+            for _, id in ipairs(saved.Inventory) do
+                if type(id) == "string" and ItemConfig.Items[id] then table.insert(data.Inventory, id) end
+            end
+            if #data.Inventory == 0 then data.Inventory = {"TrainingBlade","NoviceArmor"} end
+        end
+        if type(saved.Equipped) == "table" then
+            for slot, id in pairs(saved.Equipped) do
+                local item = ItemConfig.Items[id]
+                if item and item.Slot == slot and table.find(data.Inventory,id) then data.Equipped[slot] = id end
+            end
+        end
     elseif not ok then
         warn("ECLIPSE: Data load failed for", player.Name, saved)
     end
@@ -102,19 +144,39 @@ local function loadProfile(player)
     makeLeaderstats(player, data)
     player:SetAttribute("EclipseClass", data.Class)
     player:SetAttribute("EclipseCombo", 0)
+    local _, defense = getEquipmentBonuses(data)
+    player:SetAttribute("EclipseDefense", defense)
+    sendInventory(player)
     notify(player, "Welcome to Project ECLIPSE, " .. data.Class .. "!")
 end
 
 local function saveProfile(player)
     local data = profiles[player]
     if not data then return end
-    local payload = {Level = data.Level, XP = data.XP, Gold = data.Gold, Class = data.Class}
+    local payload = {Level=data.Level,XP=data.XP,Gold=data.Gold,Class=data.Class,Inventory=data.Inventory,Equipped=data.Equipped}
     local ok, err = pcall(function()
         Store:UpdateAsync("Player_" .. player.UserId, function()
             return payload
         end)
     end)
     if not ok then warn("ECLIPSE: Data save failed for", player.Name, err) end
+end
+
+local function awardDrop(player, isBoss)
+    local data = profiles[player]
+    if not data then return end
+    local drops = isBoss and ItemConfig.DropTables.Boss or ItemConfig.DropTables.Normal
+    local roll, total = math.random(1,100), 0
+    for _, entry in ipairs(drops) do
+        total += entry.Chance
+        if roll <= total then
+            table.insert(data.Inventory, entry.Id)
+            local item = ItemConfig.Items[entry.Id]
+            notify(player, "LOOT: " .. item.Name .. " [" .. item.Rarity .. "]")
+            sendInventory(player)
+            return
+        end
+    end
 end
 
 local function createPart(parent, name, size, position, color, material)
@@ -253,8 +315,10 @@ local function createEnemy(parentFolder, position, name, healthAmount, isBoss, o
         if killer then
             if isBoss then
                 grantRewards(killer, 200, 100)
+                awardDrop(killer, true)
             else
                 grantRewards(killer, Config.XPPerEnemy, Config.GoldPerEnemy)
+                if owner then awardDrop(killer, false) end
             end
         end
 
@@ -507,6 +571,39 @@ local function createArena()
     prompt.Triggered:Connect(enterDungeon)
 end
 
+InventoryAction.OnServerEvent:Connect(function(player, action, itemId)
+    local data = profiles[player]
+    if not data or type(action) ~= "string" then return end
+    if action == "Request" then
+        sendInventory(player)
+    elseif action == "Equip" then
+        if type(itemId) ~= "string" or not table.find(data.Inventory,itemId) then return end
+        local item = ItemConfig.Items[itemId]
+        if not item then return end
+        if data.Level < item.Level then
+            notify(player, "Required level: " .. item.Level)
+            return
+        end
+        data.Equipped[item.Slot] = itemId
+        local _, defense = getEquipmentBonuses(data)
+        player:SetAttribute("EclipseDefense", defense)
+        notify(player, item.Name .. " equipped!")
+        sendInventory(player)
+    elseif action == "Sell" then
+        if type(itemId) ~= "string" or not table.find(data.Inventory,itemId) then return end
+        local item = ItemConfig.Items[itemId]
+        if not item or data.Equipped[item.Slot] == itemId then
+            notify(player, "Unequip this item before selling it.")
+            return
+        end
+        table.remove(data.Inventory, table.find(data.Inventory,itemId))
+        data.Gold += item.SellValue
+        syncStats(player)
+        notify(player, item.Name .. " sold for " .. item.SellValue .. " Gold.")
+        sendInventory(player)
+    end
+end)
+
 SelectClass.OnServerEvent:Connect(function(player, className)
     if type(className) ~= "string" or not Config.Classes[className] then return end
     local data = profiles[player]
@@ -555,7 +652,8 @@ Attack.OnServerEvent:Connect(function(player)
     comboState[player] = state
     player:SetAttribute("EclipseCombo", state.Count)
 
-    local damage = class.Damage + math.max(0, data.Level - 1) * 2
+    local weaponAttack = getEquipmentBonuses(data)
+    local damage = class.Damage + math.max(0, data.Level - 1) * 2 + weaponAttack
     if state.Count == 3 then
         damage = math.floor(damage * 1.5)
         notify(player, "3-HIT COMBO! Finisher!")
@@ -599,7 +697,8 @@ UseSkill.OnServerEvent:Connect(function(player)
 
     lastSkill[player] = now + class.SkillCooldown
     table.sort(targets, function(a, b) return a.Distance < b.Distance end)
-    local damage = class.SkillDamage + math.max(0, data.Level - 1) * 3
+    local weaponAttack = getEquipmentBonuses(data)
+    local damage = class.SkillDamage + math.max(0, data.Level - 1) * 3 + weaponAttack
     if class.SkillMode == "Single" then
         damageEnemy(player, targets[1].Enemy, damage)
     else
