@@ -29,6 +29,10 @@ A mobile-first anime action RPG for Roblox.
 - Energy Flow: reduces skill energy costs
 - Skill Mastery: increases skill damage
 - Mobile skill tree menu with live gold and rank updates
+- Class-specific ultimate abilities with a charge gauge
+- Ultimate charge gained from successful attacks and bonus charge on enemy defeats
+- Temporary transformation aura and boosted basic attacks
+- Mobile ultimate activation button and live gauge
 - Level requirements and selling unequipped items
 
 ## Starter equipment
@@ -53,6 +57,15 @@ Each class has its own saved ranks across three branches. Upgrades cost Gold and
 | Energy Flow | -5% skill energy cost | 100 / 200 / 350 |
 | Skill Mastery | +8% skill damage | 150 / 250 / 400 |
 
+## Class ultimate abilities
+| Class | Ultimate | Damage | Range |
+|---|---|---:|---:|
+| Swordsman | Eclipse Breaker | 145 | 24 studs |
+| Mage | Astral Cataclysm | 125 | 28 studs |
+| Archer | Celestial Arrow | 210 | 55 studs |
+
+Successful hits build Ultimate charge (8 per hit, plus 12 on a defeat). At 100 charge, activate the class ultimate. The ultimate has a 25-second cooldown and grants an 8-second transformation aura with 50% increased basic attack damage. Swordsman and Mage hit enemies in range; Archer strikes the nearest target.
+
 ## Build and test
 This is a Rojo project. Roblox Studio is required on a supported Windows or macOS computer. Install Rojo, run `rojo serve`, and connect Studio using the Rojo plugin.
 
@@ -64,11 +77,11 @@ Publish the experience before testing persistent DataStores. Enable **Game Setti
 - Inventory lets you equip items or sell unequipped items.
 
 ## Development status
-This is an early prototype. Arena, dungeon, enemies, and boss visuals use placeholder Parts. The source has been committed to GitHub but has not been validated in a Roblox Studio playtest. Enemy movement and attack timing, weapon attachment alignment, warning-zone placement, skill effects, energy regeneration, skill-tree purchases and saved ranks, and mobile HUD layout still require Studio testing. Test all gameplay and saving before public release.
+This is an early prototype. Arena, dungeon, enemies, and boss visuals use placeholder Parts. The source has been committed to GitHub but has not been validated in a Roblox Studio playtest. Enemy movement and attack timing, weapon attachment alignment, warning-zone placement, skill effects, energy regeneration, skill-tree purchases and saved ranks, ultimate charge and cooldown behavior, transformation visuals, and mobile HUD layout still require Studio testing. Test all gameplay and saving before public release.
 
 ## Next milestones
-1. Ultimate transformation and class ultimate abilities
-2. Class-specific animation assets and polished weapon models
-3. Quests, achievements, and more dungeon themes
-4. Party dungeons and multiplayer rewards
-5. Character customization and polished environments
+1. Class-specific animation assets and polished weapon models
+2. Quests, achievements, and more dungeon themes
+3. Party dungeons and multiplayer rewards
+4. Character customization and polished environments
+5. Cinematic boss phases and dungeon effects
