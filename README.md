@@ -19,6 +19,10 @@ A mobile-first anime action RPG for Roblox.
 - Floating damage numbers on successful hits
 - Equipped weapon visuals attached to the character's hand
 - Mobile hunter vitality bar with live HP updates
+- Class energy system with automatic regeneration
+- Different energy costs for Swordsman, Mage, and Archer skills
+- Class-colored skill effects: expanding area bursts and focused piercing beams
+- Live mobile energy meter
 - Level requirements and selling unequipped items
 
 ## Starter equipment
@@ -26,11 +30,13 @@ A mobile-first anime action RPG for Roblox.
 - Novice Armor: +5 defense
 
 ## Class skills
-| Class | Skill |
-|---|---|
-| Swordsman | Shadow Spin |
-| Mage | Arcane Nova |
-| Archer | Piercing Shot |
+| Class | Skill | Energy cost | Cooldown |
+|---|---|---:|---:|
+| Swordsman | Shadow Spin | 30 | 8s |
+| Mage | Arcane Nova | 40 | 10s |
+| Archer | Piercing Shot | 25 | 7s |
+
+Energy capacity is 100 and regenerates at 8 per second. Skill use is validated by the server.
 
 ## Build and test
 This is a Rojo project. Roblox Studio is required on a supported Windows or macOS computer. Install Rojo, run `rojo serve`, and connect Studio using the Rojo plugin.
@@ -39,11 +45,11 @@ Publish the experience before testing persistent DataStores. Enable **Game Setti
 
 ## Controls
 - Desktop: F = attack; Q = skill; E at the portal = enter dungeon.
-- Mobile: use Attack, Skill, and Inventory buttons; interact with the portal prompt.
+- Mobile: use Attack, Skill, and Inventory buttons; monitor HP and Energy bars; interact with the portal prompt.
 - Inventory lets you equip items or sell unequipped items.
 
 ## Development status
-This is an early prototype. Arena, dungeon, enemies, and boss visuals use placeholder Parts. The source has been committed to GitHub but has not been validated in a Roblox Studio playtest. Enemy movement and attack timing, weapon attachment alignment, warning-zone placement, and mobile HUD layout still require Studio testing. Test all gameplay and saving before public release.
+This is an early prototype. Arena, dungeon, enemies, and boss visuals use placeholder Parts. The source has been committed to GitHub but has not been validated in a Roblox Studio playtest. Enemy movement and attack timing, weapon attachment alignment, warning-zone placement, skill effects, energy regeneration, and mobile HUD layout still require Studio testing. Test all gameplay and saving before public release.
 
 ## Next milestones
 1. Class-specific animation assets and polished weapon models
