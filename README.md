@@ -23,6 +23,12 @@ A mobile-first anime action RPG for Roblox.
 - Different energy costs for Swordsman, Mage, and Archer skills
 - Class-colored skill effects: expanding area bursts and focused piercing beams
 - Live mobile energy meter
+- Persistent class-specific skill trees with three upgrade branches
+- Gold-funded upgrades with server-side validation and rank caps
+- Power Core: increases basic attack damage
+- Energy Flow: reduces skill energy costs
+- Skill Mastery: increases skill damage
+- Mobile skill tree menu with live gold and rank updates
 - Level requirements and selling unequipped items
 
 ## Starter equipment
@@ -38,6 +44,15 @@ A mobile-first anime action RPG for Roblox.
 
 Energy capacity is 100 and regenerates at 8 per second. Skill use is validated by the server.
 
+## Skill tree upgrades
+Each class has its own saved ranks across three branches. Upgrades cost Gold and are capped at Rank 3.
+
+| Branch | Effect per rank | Gold costs |
+|---|---|---|
+| Power Core | +5% basic attack damage | 100 / 200 / 350 |
+| Energy Flow | -5% skill energy cost | 100 / 200 / 350 |
+| Skill Mastery | +8% skill damage | 150 / 250 / 400 |
+
 ## Build and test
 This is a Rojo project. Roblox Studio is required on a supported Windows or macOS computer. Install Rojo, run `rojo serve`, and connect Studio using the Rojo plugin.
 
@@ -49,11 +64,11 @@ Publish the experience before testing persistent DataStores. Enable **Game Setti
 - Inventory lets you equip items or sell unequipped items.
 
 ## Development status
-This is an early prototype. Arena, dungeon, enemies, and boss visuals use placeholder Parts. The source has been committed to GitHub but has not been validated in a Roblox Studio playtest. Enemy movement and attack timing, weapon attachment alignment, warning-zone placement, skill effects, energy regeneration, and mobile HUD layout still require Studio testing. Test all gameplay and saving before public release.
+This is an early prototype. Arena, dungeon, enemies, and boss visuals use placeholder Parts. The source has been committed to GitHub but has not been validated in a Roblox Studio playtest. Enemy movement and attack timing, weapon attachment alignment, warning-zone placement, skill effects, energy regeneration, skill-tree purchases and saved ranks, and mobile HUD layout still require Studio testing. Test all gameplay and saving before public release.
 
 ## Next milestones
-1. Class-specific animation assets and polished weapon models
-2. Quests, achievements, and more dungeon themes
-3. Party dungeons and multiplayer rewards
-4. Skill trees, stamina, and progression menus
+1. Ultimate transformation and class ultimate abilities
+2. Class-specific animation assets and polished weapon models
+3. Quests, achievements, and more dungeon themes
+4. Party dungeons and multiplayer rewards
 5. Character customization and polished environments
