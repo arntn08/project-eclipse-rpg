@@ -25,6 +25,15 @@ GameConfig.Dungeon = {
     FinalClearGold = 250,
 }
 
+GameConfig.SkillTree = {
+    MaxRank = 3,
+    Nodes = {
+        Power = {Name="Power Core", Description="Increases basic attack damage by 5% per rank.", Costs={100,200,350}},
+        Focus = {Name="Energy Flow", Description="Reduces skill energy cost by 5% per rank.", Costs={100,200,350}},
+        Mastery = {Name="Skill Mastery", Description="Increases skill damage by 8% per rank.", Costs={150,250,400}},
+    },
+}
+
 GameConfig.Classes = {
     Swordsman = {
         DisplayName = "Swordsman",
