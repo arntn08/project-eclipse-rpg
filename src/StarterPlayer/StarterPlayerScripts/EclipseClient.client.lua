@@ -10,6 +10,8 @@ local Attack = remotes:WaitForChild("Attack")
 local UseSkill = remotes:WaitForChild("UseSkill")
 local Notify = remotes:WaitForChild("Notify")
 local DungeonUpdate = remotes:WaitForChild("DungeonUpdate")
+local InventoryAction = remotes:WaitForChild("InventoryAction")
+local InventoryUpdate = remotes:WaitForChild("InventoryUpdate")
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "EclipseHUD"
@@ -309,6 +311,101 @@ UserInputService.InputBegan:Connect(function(input, processed)
         activateSkill()
     end
 end)
+
+
+local inventoryButton = rounded(make("TextButton", {
+    Name="InventoryButton",Size=UDim2.fromOffset(112,42),Position=UDim2.new(0,16,1,-62),
+    BackgroundColor3=Color3.fromRGB(30,80,125),Text="INVENTORY",TextColor3=Color3.new(1,1,1),
+    TextSize=13,Font=Enum.Font.GothamBlack,
+},gui),9)
+
+local inventoryPanel = rounded(make("Frame", {
+    Name="InventoryPanel",Size=UDim2.new(0,350,0,390),Position=UDim2.new(0.5,-175,0.5,-195),
+    BackgroundColor3=Color3.fromRGB(10,14,28),BorderSizePixel=0,Visible=false,
+},gui),14)
+make("UIStroke",{Color=Color3.fromRGB(55,160,230),Thickness=2},inventoryPanel)
+make("TextLabel",{
+    Size=UDim2.new(1,-60,0,38),Position=UDim2.fromOffset(12,6),BackgroundTransparency=1,
+    Text="HUNTER INVENTORY",TextColor3=Color3.fromRGB(105,205,255),TextSize=18,
+    Font=Enum.Font.GothamBlack,TextXAlignment=Enum.TextXAlignment.Left,
+},inventoryPanel)
+local closeInventory=make("TextButton",{
+    Size=UDim2.fromOffset(34,32),Position=UDim2.new(1,-44,0,8),BackgroundColor3=Color3.fromRGB(120,40,55),
+    Text="X",TextColor3=Color3.new(1,1,1),Font=Enum.Font.GothamBlack,
+},inventoryPanel)
+rounded(closeInventory,7)
+local equippedText=make("TextLabel",{
+    Size=UDim2.new(1,-20,0,36),Position=UDim2.fromOffset(10,48),BackgroundColor3=Color3.fromRGB(20,28,45),
+    Text="Equipped items loading...",TextColor3=Color3.new(1,1,1),TextSize=11,Font=Enum.Font.GothamBold,
+    TextWrapped=true,
+},inventoryPanel)
+rounded(equippedText,7)
+local inventoryList=make("ScrollingFrame",{
+    Size=UDim2.new(1,-18,1,-96),Position=UDim2.fromOffset(9,91),BackgroundTransparency=1,
+    BorderSizePixel=0,ScrollBarThickness=5,AutomaticCanvasSize=Enum.AutomaticSize.Y,CanvasSize=UDim2.new(),
+},inventoryPanel)
+make("UIListLayout",{Padding=UDim.new(0,6),SortOrder=Enum.SortOrder.LayoutOrder},inventoryList)
+
+local function renderInventory(data)
+    for _,child in ipairs(inventoryList:GetChildren()) do
+        if child:IsA("Frame") or child:IsA("TextLabel") then child:Destroy() end
+    end
+    local function itemName(id)
+        for _,item in ipairs(data.Items or {}) do if item.Id==id then return item.Name end end
+        return id or "None"
+    end
+    equippedText.Text="WEAPON: "..itemName(data.Equipped and data.Equipped.Weapon).."   |   ARMOR: "..itemName(data.Equipped and data.Equipped.Armor)
+    for index,item in ipairs(data.Items or {}) do
+        local row=rounded(make("Frame",{
+            Size=UDim2.new(1,-4,0,72),BackgroundColor3=Color3.fromRGB(22,29,48),
+            BorderSizePixel=0,LayoutOrder=index,
+        },inventoryList),7)
+        local rarity=({Common=Color3.fromRGB(200,205,215),Rare=Color3.fromRGB(65,175,255),Epic=Color3.fromRGB(190,100,255)})[item.Rarity] or Color3.new(1,1,1)
+        make("TextLabel",{
+            Size=UDim2.new(1,-126,0,24),Position=UDim2.fromOffset(8,4),BackgroundTransparency=1,
+            Text=item.Name.." ["..item.Rarity.."]",TextColor3=rarity,TextSize=12,Font=Enum.Font.GothamBlack,
+            TextXAlignment=Enum.TextXAlignment.Left,
+        },row)
+        make("TextLabel",{
+            Size=UDim2.new(1,-126,0,36),Position=UDim2.fromOffset(8,29),BackgroundTransparency=1,
+            Text=item.Slot.."  ATK +"..item.Attack.."  DEF +"..item.Defense.."  Lv."..item.Level,
+            TextColor3=Color3.fromRGB(190,200,220),TextSize=10,Font=Enum.Font.GothamMedium,
+            TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,
+        },row)
+        local isEquipped=data.Equipped and data.Equipped[item.Slot]==item.Id
+        local equip=make("TextButton",{
+            Size=UDim2.fromOffset(106,27),Position=UDim2.new(1,-113,0,6),
+            BackgroundColor3=isEquipped and Color3.fromRGB(55,115,75) or Color3.fromRGB(35,115,185),
+            Text=isEquipped and "EQUIPPED" or "EQUIP",TextColor3=Color3.new(1,1,1),
+            TextSize=10,Font=Enum.Font.GothamBlack,
+        },row)
+        rounded(equip,6)
+        equip.Activated:Connect(function()
+            if not isEquipped then InventoryAction:FireServer("Equip",item.Id) end
+        end)
+        local sell=make("TextButton",{
+            Size=UDim2.fromOffset(106,27),Position=UDim2.new(1,-113,0,39),
+            BackgroundColor3=Color3.fromRGB(125,75,35),Text="SELL +"..item.SellValue,
+            TextColor3=Color3.new(1,1,1),TextSize=10,Font=Enum.Font.GothamBlack,
+        },row)
+        rounded(sell,6)
+        sell.Activated:Connect(function() InventoryAction:FireServer("Sell",item.Id) end)
+    end
+    if #(data.Items or {})==0 then
+        make("TextLabel",{
+            Size=UDim2.new(1,-10,0,55),BackgroundTransparency=1,
+            Text="No equipment yet. Explore dungeons to find loot.",
+            TextColor3=Color3.fromRGB(190,200,220),TextWrapped=true,TextSize=13,
+        },inventoryList)
+    end
+end
+
+inventoryButton.Activated:Connect(function()
+    inventoryPanel.Visible=not inventoryPanel.Visible
+    if inventoryPanel.Visible then InventoryAction:FireServer("Request") end
+end)
+closeInventory.Activated:Connect(function() inventoryPanel.Visible=false end)
+InventoryUpdate.OnClientEvent:Connect(renderInventory)
 
 local initialClass = player:GetAttribute("EclipseClass") or "Swordsman"
 skillButton.Text = Config.Classes[initialClass].SkillName .. "\nQ"
