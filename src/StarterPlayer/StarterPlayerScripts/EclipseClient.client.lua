@@ -12,6 +12,8 @@ local Notify = remotes:WaitForChild("Notify")
 local DungeonUpdate = remotes:WaitForChild("DungeonUpdate")
 local InventoryAction = remotes:WaitForChild("InventoryAction")
 local InventoryUpdate = remotes:WaitForChild("InventoryUpdate")
+local SkillTreeAction = remotes:WaitForChild("SkillTreeAction")
+local SkillTreeUpdate = remotes:WaitForChild("SkillTreeUpdate")
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "EclipseHUD"
@@ -406,6 +408,92 @@ inventoryButton.Activated:Connect(function()
 end)
 closeInventory.Activated:Connect(function() inventoryPanel.Visible=false end)
 InventoryUpdate.OnClientEvent:Connect(renderInventory)
+
+-- Class skill tree panel
+local skillTreeButton=rounded(make("TextButton",{
+    Name="SkillTreeButton",Size=UDim2.fromOffset(112,42),
+    Position=UDim2.new(0,136,1,-62),BackgroundColor3=Color3.fromRGB(85,55,145),
+    Text="SKILL TREE",TextColor3=Color3.new(1,1,1),TextSize=12,Font=Enum.Font.GothamBlack,
+},gui),9)
+local skillTreePanel=rounded(make("Frame",{
+    Name="SkillTreePanel",Size=UDim2.new(0,360,0,310),
+    Position=UDim2.new(0.5,-180,0.5,-155),BackgroundColor3=Color3.fromRGB(10,14,29),
+    BorderSizePixel=0,Visible=false,
+},gui),13)
+make("UIStroke",{Color=Color3.fromRGB(145,95,230),Thickness=2},skillTreePanel)
+make("TextLabel",{
+    Size=UDim2.new(1,-55,0,34),Position=UDim2.fromOffset(12,6),BackgroundTransparency=1,
+    Text="CLASS SKILL TREE",TextColor3=Color3.fromRGB(195,155,255),TextSize=18,
+    Font=Enum.Font.GothamBlack,TextXAlignment=Enum.TextXAlignment.Left,
+},skillTreePanel)
+local skillTreeClose=make("TextButton",{
+    Size=UDim2.fromOffset(32,30),Position=UDim2.new(1,-42,0,8),
+    BackgroundColor3=Color3.fromRGB(120,40,55),Text="X",
+    TextColor3=Color3.new(1,1,1),Font=Enum.Font.GothamBlack,
+},skillTreePanel)
+rounded(skillTreeClose,6)
+local skillTreeInfo=make("TextLabel",{
+    Size=UDim2.new(1,-20,0,28),Position=UDim2.fromOffset(10,42),
+    BackgroundColor3=Color3.fromRGB(22,28,48),Text="Choose upgrades to strengthen your class.",
+    TextColor3=Color3.fromRGB(225,225,245),TextSize=11,Font=Enum.Font.GothamBold,
+},skillTreePanel)
+rounded(skillTreeInfo,6)
+local skillTreeList=make("Frame",{
+    Size=UDim2.new(1,-18,1,-84),Position=UDim2.fromOffset(9,76),
+    BackgroundTransparency=1,
+},skillTreePanel)
+make("UIListLayout",{Padding=UDim.new(0,7),SortOrder=Enum.SortOrder.LayoutOrder},skillTreeList)
+
+local function renderSkillTree(data)
+    for _,child in ipairs(skillTreeList:GetChildren()) do
+        if child:IsA("Frame") then child:Destroy() end
+    end
+    skillTreeInfo.Text=string.upper(tostring(data.Class)).."   |   GOLD: "..tostring(data.Gold)
+    local order=0
+    for _,nodeName in ipairs({"Power","Focus","Mastery"}) do
+        local node=data.Nodes and data.Nodes[nodeName]
+        if node then
+            order+=1
+            local rank=(data.Ranks and data.Ranks[nodeName]) or 0
+            local maxRank=data.MaxRank or 3
+            local cost=node.Costs and node.Costs[rank+1]
+            local row=rounded(make("Frame",{
+                Size=UDim2.new(1,0,0,67),BackgroundColor3=Color3.fromRGB(22,28,47),
+                BorderSizePixel=0,LayoutOrder=order,
+            },skillTreeList),7)
+            make("TextLabel",{
+                Size=UDim2.new(1,-120,0,22),Position=UDim2.fromOffset(8,4),
+                BackgroundTransparency=1,Text=node.Name.."  ["..rank.."/"..maxRank.."]",
+                TextColor3=Color3.fromRGB(210,185,255),TextSize=12,Font=Enum.Font.GothamBlack,
+                TextXAlignment=Enum.TextXAlignment.Left,
+            },row)
+            make("TextLabel",{
+                Size=UDim2.new(1,-120,0,32),Position=UDim2.fromOffset(8,29),
+                BackgroundTransparency=1,Text=node.Description,TextColor3=Color3.fromRGB(190,200,220),
+                TextSize=10,TextWrapped=true,Font=Enum.Font.GothamMedium,
+                TextXAlignment=Enum.TextXAlignment.Left,
+            },row)
+            local button=make("TextButton",{
+                Size=UDim2.fromOffset(104,42),Position=UDim2.new(1,-112,0.5,-21),
+                BackgroundColor3=rank>=maxRank and Color3.fromRGB(55,105,75) or Color3.fromRGB(95,65,165),
+                Text=rank>=maxRank and "MAX RANK" or ("UPGRADE\n"..tostring(cost).." G"),
+                TextColor3=Color3.new(1,1,1),TextSize=11,TextWrapped=true,
+                Font=Enum.Font.GothamBlack,
+                Active=rank<maxRank,
+            },row)
+            rounded(button,6)
+            button.Activated:Connect(function()
+                if rank<maxRank then SkillTreeAction:FireServer("Upgrade",nodeName) end
+            end)
+        end
+    end
+end
+skillTreeButton.Activated:Connect(function()
+    skillTreePanel.Visible=not skillTreePanel.Visible
+    if skillTreePanel.Visible then SkillTreeAction:FireServer("Request") end
+end)
+skillTreeClose.Activated:Connect(function() skillTreePanel.Visible=false end)
+SkillTreeUpdate.OnClientEvent:Connect(renderSkillTree)
 
 -- Hunter vitality HUD
 local vitalityPanel = rounded(make("Frame",{
