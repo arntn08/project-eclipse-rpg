@@ -1,87 +1,54 @@
-# Project ECLIPSE — Alpha 0.1
+# Project ECLIPSE
 
-A mobile-first anime action RPG for Roblox.
+**Alpha 0.2 — Standalone mobile browser RPG (in development)**
 
-## Current gameplay systems
-- Swordsman, Mage, and Archer classes
-- Server-validated basic attacks, skills, and three-hit combos
-- Training arena and practice enemies
-- Personal three-stage dungeon with enemy waves
-- Eclipse Overlord boss encounter
-- XP, levels, gold, and player profile saving
-- Mobile Attack and Skill controls
-- Inventory with Weapon and Armor slots
-- Common, Rare, and Epic equipment
-- Dungeon enemy and boss loot drops
-- Equipment bonuses applied to combat damage
-- Basic Shade enemy AI that pursues and attacks nearby hunters
-- Boss and enemy attack warning zones with dodge windows
-- Floating damage numbers on successful hits
-- Equipped weapon visuals attached to the character's hand
-- Mobile hunter vitality bar with live HP updates
-- Class energy system with automatic regeneration
-- Different energy costs for Swordsman, Mage, and Archer skills
-- Class-colored skill effects: expanding area bursts and focused piercing beams
-- Live mobile energy meter
-- Persistent class-specific skill trees with three upgrade branches
-- Gold-funded upgrades with server-side validation and rank caps
-- Power Core: increases basic attack damage
-- Energy Flow: reduces skill energy costs
-- Skill Mastery: increases skill damage
-- Mobile skill tree menu with live gold and rank updates
-- Class-specific ultimate abilities with a charge gauge
-- Ultimate charge gained from successful attacks and bonus charge on enemy defeats
-- Temporary transformation aura and boosted basic attacks
-- Mobile ultimate activation button and live gauge
-- Level requirements and selling unequipped items
+Project ECLIPSE is being developed as a touchscreen-friendly anime action RPG that runs in a modern mobile or desktop browser. The playable web version is separate from the original Roblox prototype.
 
-## Starter equipment
-- Training Blade: +4 attack
-- Novice Armor: +5 defense
+## Play the browser version
 
-## Class skills
-| Class | Skill | Energy cost | Cooldown |
-|---|---|---:|---:|
-| Swordsman | Shadow Spin | 30 | 8s |
-| Mage | Arcane Nova | 40 | 10s |
-| Archer | Piercing Shot | 25 | 7s |
+Once GitHub Pages deployment is enabled and the first deployment succeeds, play at:
 
-Energy capacity is 100 and regenerates at 8 per second. Skill use is validated by the server.
+**https://arntn08.github.io/project-eclipse-rpg/**
 
-## Skill tree upgrades
-Each class has its own saved ranks across three branches. Upgrades cost Gold and are capped at Rank 3.
+Open the link in Chrome or another modern browser on Android, iPhone, tablet, or desktop. Tap **Enter the Rift**, choose a class, move with the on-screen joystick, and use Attack, Skill, and Ultimate.
 
-| Branch | Effect per rank | Gold costs |
-|---|---|---|
-| Power Core | +5% basic attack damage | 100 / 200 / 350 |
-| Energy Flow | -5% skill energy cost | 100 / 200 / 350 |
-| Skill Mastery | +8% skill damage | 150 / 250 / 400 |
+## Alpha 0.2 gameplay
 
-## Class ultimate abilities
-| Class | Ultimate | Damage | Range |
-|---|---|---:|---:|
-| Swordsman | Eclipse Breaker | 145 | 24 studs |
-| Mage | Astral Cataclysm | 125 | 28 studs |
-| Archer | Celestial Arrow | 210 | 55 studs |
-
-Successful hits build Ultimate charge (8 per hit, plus 12 on a defeat). At 100 charge, activate the class ultimate. The ultimate has a 25-second cooldown and grants an 8-second transformation aura with 50% increased basic attack damage. Swordsman and Mage hit enemies in range; Archer strikes the nearest target.
-
-## Build and test
-This is a Rojo project. Roblox Studio is required on a supported Windows or macOS computer. Install Rojo, run `rojo serve`, and connect Studio using the Rojo plugin.
-
-Publish the experience before testing persistent DataStores. Enable **Game Settings → Security → Enable Studio Access to API Services** for Studio DataStore tests.
+- Choose Swordsman, Mage, or Archer.
+- Move around the arena using touchscreen joystick or WASD/arrow keys.
+- Fight Rift Shades and stronger enemies.
+- Use class-specific skills and charge your ultimate through combat.
+- Clear three areas and challenge the Eclipse Overlord.
+- Earn XP and Gold, level up, buy equipment, and upgrade Power Core.
+- Check quests, gear, skills, and hunter profile.
+- Local progress is stored in the browser on the device.
 
 ## Controls
-- Desktop: F = attack; Q = skill; E at the portal = enter dungeon.
-- Mobile: use Attack, Skill, and Inventory buttons; monitor HP and Energy bars; interact with the portal prompt.
-- Inventory lets you equip items or sell unequipped items.
+
+| Action | Mobile / Tablet | Keyboard |
+|---|---|---|
+| Move | On-screen joystick | WASD / Arrow keys |
+| Basic attack | ATTACK | F / Space |
+| Class skill | SKILL | Q |
+| Ultimate | ULT | E |
+| Menus | Bottom navigation | Touch/click |
+
+## Save data
+
+Alpha 0.2 uses browser localStorage. Progress is saved on the current browser and device. Clearing browser site data or switching browsers/devices may erase or not transfer this save. Cloud accounts and cross-device saving are not implemented yet.
 
 ## Development status
-This is an early prototype. Arena, dungeon, enemies, and boss visuals use placeholder Parts. The source has been committed to GitHub but has not been validated in a Roblox Studio playtest. Enemy movement and attack timing, weapon attachment alignment, warning-zone placement, skill effects, energy regeneration, skill-tree purchases and saved ranks, ultimate charge and cooldown behavior, transformation visuals, and mobile HUD layout still require Studio testing. Test all gameplay and saving before public release.
 
-## Next milestones
-1. Class-specific animation assets and polished weapon models
-2. Quests, achievements, and more dungeon themes
-3. Party dungeons and multiplayer rewards
-4. Character customization and polished environments
-5. Cinematic boss phases and dungeon effects
+This is an early playable prototype, not a finished commercial game. The arena uses canvas-drawn placeholder characters and enemies. Combat, touch controls, boss progression, and save behavior still need real-device testing and balancing. Report bugs with your device/browser and what happened.
+
+## Original Roblox prototype
+
+The `src/` directory and `default.project.json` preserve the earlier Roblox/Rojo prototype. Those files are not used by the browser game. The browser version lives in the root `index.html`, `styles.css`, and `game.js` files and deploys through GitHub Pages.
+
+## Roadmap
+
+1. Improve character sprites, animations, and combat feedback.
+2. Add more dungeon maps, enemy types, boss phases, and loot.
+3. Expand inventory, equipment, quests, and skill trees.
+4. Add audio, settings, accessibility, and better save management.
+5. Evolve the game toward a 3D version while retaining the ECLIPSE identity.
