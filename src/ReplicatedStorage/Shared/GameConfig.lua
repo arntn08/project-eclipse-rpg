@@ -7,6 +7,8 @@ GameConfig.EnemyHealth = 60
 GameConfig.EnemyRespawnSeconds = 4
 GameConfig.XPPerEnemy = 25
 GameConfig.GoldPerEnemy = 10
+GameConfig.EnergyMax = 100
+GameConfig.EnergyRegenPerSecond = 8
 
 GameConfig.Dungeon = {
     StageCount = 3,
@@ -34,6 +36,7 @@ GameConfig.Classes = {
         SkillDamage = 48,
         SkillRange = 15,
         SkillCooldown = 8,
+        SkillEnergyCost = 30,
         SkillMode = "Area",
         Color = Color3.fromRGB(70, 170, 255),
     },
@@ -47,6 +50,7 @@ GameConfig.Classes = {
         SkillDamage = 42,
         SkillRange = 21,
         SkillCooldown = 10,
+        SkillEnergyCost = 40,
         SkillMode = "Area",
         Color = Color3.fromRGB(190, 110, 255),
     },
@@ -60,6 +64,7 @@ GameConfig.Classes = {
         SkillDamage = 58,
         SkillRange = 30,
         SkillCooldown = 7,
+        SkillEnergyCost = 25,
         SkillMode = "Single",
         Color = Color3.fromRGB(100, 220, 150),
     },
