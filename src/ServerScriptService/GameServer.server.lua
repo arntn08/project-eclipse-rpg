@@ -190,6 +190,8 @@ local function loadProfile(player)
     makeLeaderstats(player, data)
     player:SetAttribute("EclipseClass", data.Class)
     player:SetAttribute("EclipseCombo", 0)
+    player:SetAttribute("EclipseEnergy", Config.EnergyMax)
+    player:SetAttribute("EclipseEnergyMax", Config.EnergyMax)
     local _, defense = getEquipmentBonuses(data)
     player:SetAttribute("EclipseDefense", defense)
     sendInventory(player)
@@ -345,6 +347,42 @@ local function damageEnemy(player, enemy, amount)
         task.delay(0.75,function() if popup.Parent then popup:Destroy() end end)
     end
     return true
+end
+
+local function playClassSkillEffect(player, class, targetCore)
+    local character = player.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    local color = class.Color or Color3.fromRGB(80,180,255)
+    local effect = Instance.new("Part")
+    effect.Name = "ClassSkillEffect"
+    effect.Anchored = true
+    effect.CanCollide = false
+    effect.Material = Enum.Material.Neon
+    effect.Color = color
+    effect.Transparency = 0.25
+    if class.SkillMode == "Single" and targetCore then
+        local distance = (targetCore.Position-root.Position).Magnitude
+        effect.Shape = Enum.PartType.Block
+        effect.Size = Vector3.new(0.45,0.45,distance)
+        effect.CFrame = CFrame.lookAt(root.Position+Vector3.new(0,1,0),targetCore.Position) * CFrame.new(0,0,-distance/2)
+        effect.Parent = Workspace
+        task.delay(0.22,function() if effect.Parent then effect:Destroy() end end)
+    else
+        effect.Shape = Enum.PartType.Ball
+        effect.Size = Vector3.new(2,2,2)
+        effect.Position = root.Position
+        effect.Parent = Workspace
+        task.spawn(function()
+            for step=1,12 do
+                if not effect.Parent then break end
+                effect.Size += Vector3.new(2.5,2.5,2.5)
+                effect.Transparency = math.min(0.95,effect.Transparency+0.06)
+                task.wait(0.035)
+            end
+            if effect.Parent then effect:Destroy() end
+        end)
+    end
 end
 
 local function createEnemy(parentFolder, position, name, healthAmount, isBoss, owner)
@@ -825,6 +863,12 @@ UseSkill.OnServerEvent:Connect(function(player)
         notify(player, "Skill recharging: " .. math.ceil(readyAt - now) .. "s")
         return
     end
+    local energy = player:GetAttribute("EclipseEnergy") or Config.EnergyMax
+    local energyCost = class.SkillEnergyCost or 30
+    if energy < energyCost then
+        notify(player, "Not enough energy! Need " .. energyCost .. " EN.")
+        return
+    end
 
     local folder = getPlayerEnemyFolder(player)
     local targets = {}
@@ -845,20 +889,35 @@ UseSkill.OnServerEvent:Connect(function(player)
     end
 
     lastSkill[player] = now + class.SkillCooldown
+    player:SetAttribute("EclipseEnergy", math.max(0,energy-energyCost))
     table.sort(targets, function(a, b) return a.Distance < b.Distance end)
     local weaponAttack = getEquipmentBonuses(data)
     local damage = class.SkillDamage + math.max(0, data.Level - 1) * 3 + weaponAttack
     if class.SkillMode == "Single" then
+        local core = targets[1].Enemy:FindFirstChild("Core")
+        playClassSkillEffect(player,class,core)
         damageEnemy(player, targets[1].Enemy, damage)
     else
+        playClassSkillEffect(player,class)
         for _, target in ipairs(targets) do
             damageEnemy(player, target.Enemy, damage)
         end
     end
-    notify(player, class.SkillName .. " activated!")
+    notify(player, class.SkillName .. " activated! -" .. energyCost .. " EN")
 end)
 
-Players.PlayerAdded:Connect(loadProfile)
+Players.PlayerAdded:Connect(function(player)
+    loadProfile(player)
+    task.spawn(function()
+        while player.Parent == Players do
+            task.wait(1)
+            local current = player:GetAttribute("EclipseEnergy")
+            if current ~= nil and current < Config.EnergyMax then
+                player:SetAttribute("EclipseEnergy", math.min(Config.EnergyMax,current+Config.EnergyRegenPerSecond))
+            end
+        end
+    end)
+end)
 Players.PlayerRemoving:Connect(function(player)
     saveProfile(player)
     local state = dungeonStates[player]
@@ -878,5 +937,14 @@ end)
 
 createArena()
 for _, player in ipairs(Players:GetPlayers()) do
-    task.spawn(loadProfile, player)
+    task.spawn(function()
+        loadProfile(player)
+        while player.Parent == Players do
+            task.wait(1)
+            local current = player:GetAttribute("EclipseEnergy")
+            if current ~= nil and current < Config.EnergyMax then
+                player:SetAttribute("EclipseEnergy", math.min(Config.EnergyMax,current+Config.EnergyRegenPerSecond))
+            end
+        end
+    end)
 end
