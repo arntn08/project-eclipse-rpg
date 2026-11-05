@@ -29,10 +29,12 @@ local InventoryAction = getRemote("InventoryAction")
 local InventoryUpdate = getRemote("InventoryUpdate")
 local SkillTreeAction = getRemote("SkillTreeAction")
 local SkillTreeUpdate = getRemote("SkillTreeUpdate")
+local UltimateAction = getRemote("UltimateAction")
 
 local profiles = {}
 local lastAttack = {}
 local lastSkill = {}
+local lastUltimate = {}
 local comboState = {}
 local dungeonStates = {}
 
@@ -221,6 +223,8 @@ local function loadProfile(player)
     player:SetAttribute("EclipseCombo", 0)
     player:SetAttribute("EclipseEnergy", Config.EnergyMax)
     player:SetAttribute("EclipseEnergyMax", Config.EnergyMax)
+    player:SetAttribute("EclipseUltimateCharge",0)
+    player:SetAttribute("EclipseUltimateActive",false)
     local _, defense = getEquipmentBonuses(data)
     player:SetAttribute("EclipseDefense", defense)
     sendInventory(player)
@@ -348,6 +352,11 @@ end
 
 local checkDungeonWave
 
+local function addUltimateCharge(player,amount)
+    local current=player:GetAttribute("EclipseUltimateCharge") or 0
+    player:SetAttribute("EclipseUltimateCharge",math.clamp(current+amount,0,Config.Ultimate.ChargeMax))
+end
+
 local function damageEnemy(player, enemy, amount)
     if not enemy or not enemy.Parent or enemy:GetAttribute("Defeated") then return false end
     local health = enemy:FindFirstChild("Health")
@@ -357,6 +366,8 @@ local function damageEnemy(player, enemy, amount)
     tag.Value = player.UserId
     tag.Parent = enemy
     health.Value = math.max(0, health.Value - amount)
+    addUltimateCharge(player,Config.Ultimate.ChargePerHit)
+    if health.Value<=0 then addUltimateCharge(player,Config.Ultimate.KillBonus) end
     local core = enemy:FindFirstChild("Core")
     if core then
         local popup = Instance.new("BillboardGui")
@@ -874,6 +885,7 @@ Attack.OnServerEvent:Connect(function(player)
     local ranks=getSkillRanks(data)
     local powerMultiplier=1+(ranks.Power or 0)*0.05
     local damage = math.floor((class.Damage + math.max(0, data.Level - 1) * 2 + weaponAttack)*powerMultiplier)
+    if (player:GetAttribute("EclipseUltimateUntil") or 0)>os.clock() then damage=math.floor(damage*Config.Ultimate.BasicDamageMultiplier) end
     if state.Count == 3 then
         damage = math.floor(damage * 1.5)
         notify(player, "3-HIT COMBO! Finisher!")
@@ -911,6 +923,81 @@ SkillTreeAction.OnServerEvent:Connect(function(player,action,nodeName)
     syncStats(player)
     sendSkillTree(player)
     notify(player,node.Name.." upgraded to Rank "..tostring(rank+1).."!")
+end)
+
+UltimateAction.OnServerEvent:Connect(function(player)
+    local data=profiles[player]
+    local character=player.Character
+    local root=character and character:FindFirstChild("HumanoidRootPart")
+    if not data or not root then return end
+    local now=os.clock()
+    if now<(lastUltimate[player] or 0) then
+        notify(player,"Ultimate recharging: "..math.ceil(lastUltimate[player]-now).."s")
+        return
+    end
+    local charge=player:GetAttribute("EclipseUltimateCharge") or 0
+    if charge<Config.Ultimate.ChargeMax then
+        notify(player,"Ultimate gauge is not full yet!")
+        return
+    end
+    local class=Config.Classes[data.Class] or Config.Classes.Swordsman
+    local folder=getPlayerEnemyFolder(player)
+    local targets={}
+    for _,enemy in ipairs(folder:GetChildren()) do
+        local core=enemy:FindFirstChild("Core")
+        local health=enemy:FindFirstChild("Health")
+        if core and health and health.Value>0 then
+            local distance=(core.Position-root.Position).Magnitude
+            if distance<=class.UltimateRange then table.insert(targets,{Enemy=enemy,Core=core,Distance=distance}) end
+        end
+    end
+    if #targets==0 then notify(player,"No enemies in ultimate range."); return end
+    table.sort(targets,function(a,b) return a.Distance<b.Distance end)
+    player:SetAttribute("EclipseUltimateCharge",0)
+    player:SetAttribute("EclipseUltimateActive",true)
+    player:SetAttribute("EclipseUltimateUntil",now+Config.Ultimate.BuffDuration)
+    lastUltimate[player]=now+Config.Ultimate.Cooldown
+    local highlight=Instance.new("Highlight")
+    highlight.Name="EclipseUltimateAura"
+    highlight.FillColor=class.Color
+    highlight.OutlineColor=Color3.new(1,1,1)
+    highlight.FillTransparency=0.28
+    highlight.OutlineTransparency=0
+    highlight.Parent=character
+    task.delay(Config.Ultimate.BuffDuration,function()
+        if highlight.Parent then highlight:Destroy() end
+        if player.Parent==Players then player:SetAttribute("EclipseUltimateActive",false) end
+    end)
+    local burst=Instance.new("Part")
+    burst.Name="EclipseUltimateBurst"
+    burst.Shape=Enum.PartType.Ball
+    burst.Size=Vector3.new(3,3,3)
+    burst.Position=root.Position
+    burst.Anchored=true
+    burst.CanCollide=false
+    burst.Material=Enum.Material.Neon
+    burst.Color=class.Color
+    burst.Transparency=0.2
+    burst.Parent=Workspace
+    task.spawn(function()
+        for _=1,16 do
+            if not burst.Parent then break end
+            burst.Size+=Vector3.new(3,3,3)
+            burst.Transparency=math.min(0.95,burst.Transparency+0.045)
+            task.wait(0.035)
+        end
+        if burst.Parent then burst:Destroy() end
+    end)
+    local ranks=getSkillRanks(data)
+    local mastery=1+(ranks.Mastery or 0)*0.08
+    local attackBonus=getEquipmentBonuses(data)
+    local damage=math.floor((class.UltimateDamage+math.max(0,data.Level-1)*5+attackBonus)*mastery)
+    if class.SkillMode=="Single" then
+        damageEnemy(player,targets[1].Enemy,damage)
+    else
+        for _,target in ipairs(targets) do damageEnemy(player,target.Enemy,damage) end
+    end
+    notify(player,class.UltimateName.." unleashed! Damage boost active for "..Config.Ultimate.BuffDuration.."s!")
 end)
 
 UseSkill.OnServerEvent:Connect(function(player)
@@ -991,6 +1078,7 @@ Players.PlayerRemoving:Connect(function(player)
     profiles[player] = nil
     lastAttack[player] = nil
     lastSkill[player] = nil
+    lastUltimate[player] = nil
     comboState[player] = nil
 end)
 
