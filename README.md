@@ -1,57 +1,48 @@
 # Project ECLIPSE — Alpha 0.1
 
-A mobile-first anime action RPG for Roblox, inspired by classic anime action RPG combat.
+A mobile-first anime action RPG for Roblox.
 
-## Current systems
-- Swordsman, Mage, and Archer class selection
-- Server-validated basic attacks, class skills, and three-hit combo finisher
-- Skill cooldowns
-- Training arena and respawning practice enemies
-- ECLIPSE Gate portal with proximity interaction
-- Personal dungeon room for each player
-- Three dungeon stages with two waves per stage
-- Enemy waves that scale by stage
-- Eclipse Overlord boss with a health bar and pulse attack
-- Dungeon clear rewards, XP, levels, and gold
-- Basic player profile saving through DataStoreService
-- Mobile-friendly Attack and Skill controls
-- Dungeon progress and boss HUD
+## Current gameplay systems
+- Swordsman, Mage, and Archer classes
+- Server-validated basic attacks, skills, and three-hit combos
+- Training arena and practice enemies
+- Personal three-stage dungeon with enemy waves
+- Eclipse Overlord boss encounter
+- XP, levels, gold, and player profile saving
+- Mobile Attack and Skill controls
+- Inventory with Weapon and Armor slots
+- Common, Rare, and Epic equipment
+- Dungeon enemy and boss loot drops
+- Equipment bonuses applied to combat damage
+- Level requirements and selling unequipped items
 
-## Class abilities
-| Class | Skill | Behavior |
-|---|---|---|
-| Swordsman | Shadow Spin | Area damage |
-| Mage | Arcane Nova | Larger area damage |
-| Archer | Piercing Shot | High single-target damage |
+## Starter equipment
+- Training Blade: +4 attack
+- Novice Armor: +5 defense
 
-## Dungeon loop
-1. Walk to the blue ECLIPSE Gate in the hub.
-2. Use the on-screen prompt to enter your personal dungeon.
-3. Clear two waves in each of the three stages.
-4. Defeat the Eclipse Overlord in the final wave.
-5. Receive completion rewards and return to the hub.
-
-Dungeon enemy strength increases with each stage. The final boss has 450 health and periodically damages players within its attack radius.
+## Class skills
+| Class | Skill |
+|---|---|
+| Swordsman | Shadow Spin |
+| Mage | Arcane Nova |
+| Archer | Piercing Shot |
 
 ## Build and test
-This repository is a Rojo project. Roblox Studio is required and runs on supported Windows or macOS computers. Install Rojo, then run:
+This is a Rojo project. Roblox Studio is required on a supported Windows or macOS computer. Install Rojo, run `rojo serve`, and connect Studio using the Rojo plugin.
 
-```sh
-rojo serve
-```
-
-Connect Roblox Studio using the Rojo plugin. Open the place and test with **Play**. Publish the experience before testing persistent DataStores. Enable **Game Settings → Security → Enable Studio Access to API Services** for Studio DataStore tests.
+Publish the experience before testing persistent DataStores. Enable **Game Settings → Security → Enable Studio Access to API Services** for Studio DataStore tests.
 
 ## Controls
-- Desktop: F = basic attack; Q = class skill; E at the portal = enter dungeon.
-- Mobile: use the on-screen Attack and Skill buttons; tap the portal prompt to enter.
-- Choose Swordsman, Mage, or Archer from the class panel.
+- Desktop: F = attack; Q = skill; E at the portal = enter dungeon.
+- Mobile: use Attack, Skill, and Inventory buttons; interact with the portal prompt.
+- Inventory lets you equip items or sell unequipped items.
 
 ## Development status
-This is an expanding prototype. The arena, portal, enemies, and boss are currently generated from simple Parts. They are gameplay placeholders, not final anime character models or animated assets. The systems have been committed to GitHub but still require Roblox Studio runtime testing.
+This is an early prototype. Arena, dungeon, enemies, and boss visuals use placeholder Parts. The source has been committed to GitHub but has not been validated in a Roblox Studio playtest. Test all gameplay and saving before public release.
 
-## Planned next milestones
-1. Enemy movement, attack animations, hit effects, and class animation sets
-2. Inventory, equipment, weapon drops, and loot UI
-3. More dungeon themes, boss mechanics, and party matchmaking
-4. Quest system, save-data expansion, and polished game menus
+## Next milestones
+1. Character rigs, class animations, and combat effects
+2. Enemy AI and boss telegraphs
+3. Quests, achievements, and more dungeon themes
+4. Party dungeons and multiplayer rewards
+5. Polished character and progression menus
