@@ -79,6 +79,52 @@ local function getEquipmentBonuses(data)
     return attack, defense
 end
 
+local function refreshWeaponVisual(player)
+    local character = player.Character
+    local data = profiles[player]
+    if not character or not data then return end
+    local hand = character:FindFirstChild("RightHand") or character:FindFirstChild("Right Arm")
+    if not hand then return end
+    local old = character:FindFirstChild("EclipseWeaponVisual")
+    if old then old:Destroy() end
+    local weaponId = data.Equipped and data.Equipped.Weapon
+    local item = weaponId and ItemConfig.Items[weaponId]
+    if not item then return end
+    local model = Instance.new("Model")
+    model.Name = "EclipseWeaponVisual"
+    model.Parent = character
+    local colors = {TrainingBlade=Color3.fromRGB(185,205,220),AzureEdge=Color3.fromRGB(45,175,255),ShadowFang=Color3.fromRGB(165,75,235)}
+    local blade = Instance.new("Part")
+    blade.Name = "Blade"
+    blade.Size = Vector3.new(0.22, 2.7, 0.42)
+    blade.Material = Enum.Material.Neon
+    blade.Color = colors[weaponId] or Color3.fromRGB(90,190,255)
+    blade.CanCollide = false
+    blade.Massless = true
+    blade.Anchored = false
+    blade.Parent = model
+    local grip = Instance.new("Part")
+    grip.Name = "Grip"
+    grip.Size = Vector3.new(0.3,0.8,0.3)
+    grip.Color = Color3.fromRGB(35,30,45)
+    grip.CanCollide = false
+    grip.Massless = true
+    grip.Anchored = false
+    grip.Parent = model
+    local offset = CFrame.new(0,-0.9,0) * CFrame.Angles(math.rad(12),0,math.rad(12))
+    blade.CFrame = hand.CFrame * offset
+    grip.CFrame = blade.CFrame * CFrame.new(0,-1.45,0)
+    local bladeWeld = Instance.new("WeldConstraint")
+    bladeWeld.Part0 = blade
+    bladeWeld.Part1 = grip
+    bladeWeld.Parent = blade
+    local handWeld = Instance.new("Weld")
+    handWeld.Part0 = hand
+    handWeld.Part1 = blade
+    handWeld.C0 = offset
+    handWeld.Parent = hand
+end
+
 local function makeLeaderstats(player, data)
     local stats = Instance.new("Folder")
     stats.Name = "leaderstats"
@@ -147,6 +193,11 @@ local function loadProfile(player)
     local _, defense = getEquipmentBonuses(data)
     player:SetAttribute("EclipseDefense", defense)
     sendInventory(player)
+    refreshWeaponVisual(player)
+    player.CharacterAdded:Connect(function()
+        task.wait(0.7)
+        refreshWeaponVisual(player)
+    end)
     notify(player, "Welcome to Project ECLIPSE, " .. data.Class .. "!")
 end
 
@@ -274,6 +325,25 @@ local function damageEnemy(player, enemy, amount)
     tag.Value = player.UserId
     tag.Parent = enemy
     health.Value = math.max(0, health.Value - amount)
+    local core = enemy:FindFirstChild("Core")
+    if core then
+        local popup = Instance.new("BillboardGui")
+        popup.Name = "DamageNumber"
+        popup.Size = UDim2.fromOffset(90,32)
+        popup.StudsOffset = Vector3.new(math.random(-2,2),4,0)
+        popup.AlwaysOnTop = true
+        popup.Parent = core
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.fromScale(1,1)
+        label.BackgroundTransparency = 1
+        label.Text = "-" .. tostring(amount)
+        label.TextColor3 = Color3.fromRGB(255,225,110)
+        label.TextStrokeTransparency = 0.15
+        label.Font = Enum.Font.GothamBlack
+        label.TextSize = 22
+        label.Parent = popup
+        task.delay(0.75,function() if popup.Parent then popup:Destroy() end end)
+    end
     return true
 end
 
@@ -334,6 +404,67 @@ local function createEnemy(parentFolder, position, name, healthAmount, isBoss, o
         end
     end)
 
+    if not isBoss then
+        task.spawn(function()
+            local nextAttack = 0
+            while model.Parent and health.Value > 0 do
+                task.wait(0.25)
+                if not model.Parent or health.Value <= 0 then break end
+                local target = owner
+                local targetRoot, targetHumanoid
+                if target then
+                    local character = target.Character
+                    targetRoot = character and character:FindFirstChild("HumanoidRootPart")
+                    targetHumanoid = character and character:FindFirstChildOfClass("Humanoid")
+                else
+                    local nearestDistance = 65
+                    for _, candidate in ipairs(Players:GetPlayers()) do
+                        local character = candidate.Character
+                        local candidateRoot = character and character:FindFirstChild("HumanoidRootPart")
+                        local candidateHumanoid = character and character:FindFirstChildOfClass("Humanoid")
+                        if candidateRoot and candidateHumanoid and candidateHumanoid.Health > 0 then
+                            local distance = (candidateRoot.Position-core.Position).Magnitude
+                            if distance < nearestDistance then
+                                nearestDistance = distance
+                                target, targetRoot, targetHumanoid = candidate, candidateRoot, candidateHumanoid
+                            end
+                        end
+                    end
+                end
+                if targetRoot and targetHumanoid and targetHumanoid.Health > 0 then
+                    local delta = targetRoot.Position-core.Position
+                    local distance = delta.Magnitude
+                    if distance > 6 then
+                        local direction = delta.Unit
+                        local nextPosition = core.Position + direction * math.min(1.6, distance-5)
+                        core.Position = Vector3.new(nextPosition.X, core.Position.Y, nextPosition.Z)
+                    elseif os.clock() >= nextAttack then
+                        nextAttack = os.clock()+2.4
+                        local warning = Instance.new("Part")
+                        warning.Name = "EnemyAttackWarning"
+                        warning.Shape = Enum.PartType.Cylinder
+                        warning.Size = Vector3.new(0.18,7,7)
+                        warning.CFrame = CFrame.new(targetRoot.Position.X,0.15,targetRoot.Position.Z) * CFrame.Angles(0,0,math.rad(90))
+                        warning.Anchored = true
+                        warning.CanCollide = false
+                        warning.Material = Enum.Material.Neon
+                        warning.Color = Color3.fromRGB(255,75,65)
+                        warning.Transparency = 0.35
+                        warning.Parent = parentFolder
+                        task.wait(0.65)
+                        if warning.Parent then warning:Destroy() end
+                        if targetRoot.Parent and (targetRoot.Position-core.Position).Magnitude <= 9 then
+                            local _, defense = getEquipmentBonuses(profiles[target] or {})
+                            local hit = math.max(1, 8-math.floor(defense*0.2))
+                            targetHumanoid:TakeDamage(hit)
+                            notify(target,"SHADE STRIKE! -" .. hit .. " HP")
+                        end
+                    end
+                end
+            end
+        end)
+    end
+
     if isBoss and owner then
         task.spawn(function()
             while model.Parent and health.Value > 0 do
@@ -344,6 +475,21 @@ local function createEnemy(parentFolder, position, name, healthAmount, isBoss, o
                 local humanoid = character and character:FindFirstChildOfClass("Humanoid")
                 if root and humanoid and humanoid.Health > 0 then
                     if (root.Position - core.Position).Magnitude <= DungeonConfig.BossAttackRange then
+                        notify(owner, "WARNING: OVERLORD PULSE — MOVE AWAY!")
+                        local warning = Instance.new("Part")
+                        warning.Name = "BossAttackWarning"
+                        warning.Shape = Enum.PartType.Cylinder
+                        warning.Size = Vector3.new(0.2,DungeonConfig.BossAttackRange*2,DungeonConfig.BossAttackRange*2)
+                        warning.CFrame = CFrame.new(root.Position.X,0.2,root.Position.Z) * CFrame.Angles(0,0,math.rad(90))
+                        warning.Anchored = true
+                        warning.CanCollide = false
+                        warning.Material = Enum.Material.Neon
+                        warning.Color = Color3.fromRGB(255,35,65)
+                        warning.Transparency = 0.55
+                        warning.Parent = parentFolder
+                        task.wait(1)
+                        if warning.Parent then warning:Destroy() end
+                        if not root.Parent or (root.Position-core.Position).Magnitude > DungeonConfig.BossAttackRange then continue end
                         local _, defense = getEquipmentBonuses(profiles[owner] or {})
                         local actualDamage = math.max(1, DungeonConfig.BossDamage - math.floor(defense * 0.25))
                         humanoid:TakeDamage(actualDamage)
@@ -589,6 +735,7 @@ InventoryAction.OnServerEvent:Connect(function(player, action, itemId)
         data.Equipped[item.Slot] = itemId
         local _, defense = getEquipmentBonuses(data)
         player:SetAttribute("EclipseDefense", defense)
+        if item.Slot == "Weapon" then refreshWeaponVisual(player) end
         notify(player, item.Name .. " equipped!")
         sendInventory(player)
     elseif action == "Sell" then
