@@ -227,14 +227,45 @@ function drawMonster(e,isBoss=false){
 }
 foe=function(e,isBoss=false){drawMonster(e,isBoss)};
 const heroBeforeForge=hero;
-hero=function(){heroBeforeForge();if(!p)return;let w=equippedWeapon(),x=p.x-camera,lift=p.jump>0?Math.sin((p.jump/.38)*Math.PI)*38:0;
- c.save();c.translate(x,p.y-lift-43);if(p.face<0)c.scale(-1,1);c.rotate(p.atk>0?-.8+(1-p.atk/.31)*1.6:-.2);
- let metal=c.createLinearGradient(0,-60,0,8);metal.addColorStop(0,"#fff");metal.addColorStop(.35,w.color);metal.addColorStop(1,"#293b5b");c.shadowColor=w.color;c.shadowBlur=14;c.lineCap="round";
- if(chosen==="Mage"||w.kind==="staff"){c.strokeStyle="#8b6ac0";c.lineWidth=7;c.beginPath();c.moveTo(17,15);c.lineTo(28,-60);c.stroke();c.fillStyle=metal;c.beginPath();c.arc(29,-64,10,0,7);c.fill();c.strokeStyle=w.color;c.lineWidth=3;c.beginPath();c.arc(29,-64,15,0,7);c.stroke()}
- else if(chosen==="Archer"||w.kind==="bow"){c.strokeStyle=w.color;c.lineWidth=5;c.beginPath();c.arc(23,-20,26,-1.25,1.25);c.stroke();c.strokeStyle="#fff";c.lineWidth=1.5;c.beginPath();c.moveTo(16,-45);c.lineTo(16,5);c.stroke();c.strokeStyle="#dffaff";c.lineWidth=2;c.beginPath();c.moveTo(4,-20);c.lineTo(52,-20);c.stroke()}
- else if(chosen==="Assassin"||w.kind==="dual"){for(let s of [-1,1]){c.save();c.scale(1,s);c.strokeStyle="#26344d";c.lineWidth=7;c.beginPath();c.moveTo(10,-5);c.lineTo(18,-16);c.stroke();c.fillStyle=metal;c.beginPath();c.moveTo(18,-16);c.lineTo(32,-57);c.lineTo(27,-19);c.closePath();c.fill();c.restore()}}
- else{c.strokeStyle="#25314b";c.lineWidth=9;c.beginPath();c.moveTo(12,5);c.lineTo(18,-18);c.stroke();c.fillStyle=metal;c.beginPath();if(w.kind==="great"){c.moveTo(18,-16);c.lineTo(2,-45);c.lineTo(9,-72);c.lineTo(27,-58);c.lineTo(36,-31)}else if(w.kind==="katana"){c.moveTo(18,-16);c.lineTo(30,-77);c.lineTo(34,-75);c.lineTo(25,-14)}else{c.moveTo(18,-16);c.lineTo(11,-45);c.lineTo(22,-72);c.lineTo(33,-43)}c.closePath();c.fill();c.strokeStyle="#fff";c.lineWidth=1.5;c.stroke();c.strokeStyle="#e5c77b";c.lineWidth=4;c.beginPath();c.moveTo(9,-19);c.lineTo(31,-15);c.stroke()}
- if(p.atk>0){c.globalAlpha=.55;c.strokeStyle=w.color;c.lineWidth=5;c.beginPath();c.arc(13,-27,49,-1.15,.8);c.stroke()}c.restore();
+// Draw the weapon from the character's actual right-hand area BEFORE the sprite.
+// The forearm/hand therefore sits in front of the grip instead of the blade floating over the body.
+hero=function(){
+ if(!p)return;
+ let w=equippedWeapon(),x=p.x-camera,lift=p.jump>0?Math.sin((p.jump/.38)*Math.PI)*38:0;
+ c.save();
+ c.translate(x+13,p.y-lift-52);
+ if(p.face<0)c.scale(-1,1);
+ c.rotate(p.atk>0?-.8+(1-p.atk/.31)*1.6:-.2);
+ let metal=c.createLinearGradient(0,-60,0,8);
+ metal.addColorStop(0,"#fff");metal.addColorStop(.35,w.color);metal.addColorStop(1,"#293b5b");
+ c.shadowColor=w.color;c.shadowBlur=14;c.lineCap="round";
+ if(chosen==="Mage"||w.kind==="staff"){
+  c.strokeStyle="#8b6ac0";c.lineWidth=7;c.beginPath();c.moveTo(0,4);c.lineTo(16,-66);c.stroke();
+  c.fillStyle=metal;c.beginPath();c.arc(17,-70,10,0,7);c.fill();
+  c.strokeStyle=w.color;c.lineWidth=3;c.beginPath();c.arc(17,-70,15,0,7);c.stroke();
+ }else if(chosen==="Archer"||w.kind==="bow"){
+  c.strokeStyle=w.color;c.lineWidth=5;c.beginPath();c.arc(15,-22,26,-1.25,1.25);c.stroke();
+  c.strokeStyle="#fff";c.lineWidth=1.5;c.beginPath();c.moveTo(8,-47);c.lineTo(8,3);c.stroke();
+  c.strokeStyle="#dffaff";c.lineWidth=2;c.beginPath();c.moveTo(-4,-22);c.lineTo(44,-22);c.stroke();
+ }else if(chosen==="Assassin"||w.kind==="dual"){
+  for(let side of [-1,1]){
+   c.save();c.scale(1,side);c.strokeStyle="#26344d";c.lineWidth=7;c.beginPath();c.moveTo(0,2);c.lineTo(7,-13);c.stroke();
+   c.fillStyle=metal;c.beginPath();c.moveTo(7,-13);c.lineTo(22,-57);c.lineTo(17,-16);c.closePath();c.fill();c.restore();
+  }
+ }else{
+  // Grip ends at the palm; blade rises from the fist, aligned with the forearm.
+  c.strokeStyle="#25314b";c.lineWidth=8;c.beginPath();c.moveTo(0,3);c.lineTo(5,-17);c.stroke();
+  c.fillStyle=metal;c.beginPath();
+  if(w.kind==="great"){c.moveTo(5,-17);c.lineTo(-10,-45);c.lineTo(-3,-72);c.lineTo(14,-58);c.lineTo(23,-31)}
+  else if(w.kind==="katana"){c.moveTo(5,-17);c.lineTo(17,-78);c.lineTo(21,-76);c.lineTo(12,-15)}
+  else{c.moveTo(5,-17);c.lineTo(-2,-45);c.lineTo(9,-72);c.lineTo(20,-43)}
+  c.closePath();c.fill();c.strokeStyle="#fff";c.lineWidth=1.5;c.stroke();
+  c.strokeStyle="#e5c77b";c.lineWidth=4;c.beginPath();c.moveTo(-4,-20);c.lineTo(18,-16);c.stroke();
+ }
+ if(p.atk>0){c.globalAlpha=.48;c.strokeStyle=w.color;c.lineWidth=5;c.beginPath();c.arc(0,-28,49,-1.15,.8);c.stroke()}
+ c.restore();
+ // Character is rendered over the grip so the sword visually attaches to the hand.
+ heroBeforeForge();
 };
 const oldPanelForge=panel;
 panel=function(name){if(name!=="inventory"){oldPanelForge(name);return}
