@@ -39,3 +39,32 @@
 .mini-btn{border:1px solid #9ceaff;background:linear-gradient(180deg,#286a9c,#14375e);box-shadow:inset 0 1px #fff4}
 .key-hint{border:1px solid #9ccbe077;background:#07152bd9;color:#dff7ff;box-shadow:0 2px 12px #0008}
 @media(max-width:540px){.action-buttons{gap:5px}.action{width:48px;height:48px}.action.attack{width:58px;height:58px}.action span{font-size:18px}}
+
+/* ALPHA 1.4 — premium game and weapon forge */
+:root{--cyan:#8ff3ff;--gold:#ffd98b}
+body{background:#050916}
+#app{max-width:1440px;background:radial-gradient(ellipse at 50% 8%,#354d79 0,#152b4c 38%,#070d1b 100%);box-shadow:0 0 90px #000}
+.topbar{height:64px;padding:0 clamp(14px,3vw,38px);background:linear-gradient(180deg,#172b4cfa,#09152af5);border-bottom:1px solid #b3dfff66}
+.brand b{font-size:14px;letter-spacing:2px}.brand small{font-size:9px;color:#b4c9e5}
+.screen{inset:64px 0 0;background:radial-gradient(ellipse at 50% 45%,#6e93c02a,transparent 56%)}
+.hero-copy{margin-bottom:24px}h1{font-size:clamp(30px,6vw,64px);text-shadow:0 4px 0 #0a1730,0 0 32px #51caff55}.hero-copy p:last-child{font-size:16px;color:#d0dced}
+.class-grid{max-width:900px;gap:14px}.class-card{min-height:170px;border-radius:5px;border:1px solid #8caed477;background:linear-gradient(145deg,#3b5b85ee,#172c4d 48%,#091326);box-shadow:inset 0 1px #fff4,0 9px 24px #0008}
+.class-card.selected{transform:translateY(-5px);border-color:#b9f7ff;box-shadow:0 0 0 1px #b9f7ff55,0 0 32px #55cfff66,inset 0 0 28px #6cdfff22}
+.class-icon{font-size:42px;height:48px;filter:drop-shadow(0 0 12px currentColor)}.class-card b{font-size:12px;letter-spacing:1px}.class-card small{font-size:13px}
+.primary-btn{min-width:240px;padding:16px 28px;font-size:13px;letter-spacing:2px}
+.game-screen{inset:64px 0 70px}.hud{height:74px;padding:8px 22px}.combat-hud{height:108px;padding-left:24px;padding-right:24px}.action-buttons{gap:10px}.action{width:60px;height:60px}.action.attack{width:72px;height:72px}
+.bottom-nav{height:70px;background:linear-gradient(180deg,#152b4b,#071326);border-top:1px solid #9bc9ed88}.bottom-nav button{font-size:21px}.bottom-nav button small{font-size:9px;letter-spacing:1px}
+.panel{left:50%;right:auto;transform:translateX(-50%);width:min(680px,calc(100% - 22px));max-height:72%;bottom:78px;padding:16px}
+.armory-equipped{display:flex;align-items:center;gap:14px;padding:13px;margin:12px 0 16px;border:1px solid #8ddfff88;background:linear-gradient(110deg,#1c3d61,#0b1830)}
+.armory-emblem{width:52px;height:52px;display:grid;place-items:center;font-size:29px;color:#a8f3ff;border:1px solid #a8f3ff;border-radius:8px;background:radial-gradient(circle,#285c80,#101a32);text-shadow:0 0 14px #64eaff}
+.armory-equipped small,.armory-equipped span{display:block;font:9px Orbitron;color:#a9c4df;letter-spacing:1px}.armory-equipped b{display:block;font:16px Orbitron;color:#fff;margin:4px 0}.armory-equipped span{color:#8ff3ff}
+.weapon-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.weapon-card{min-width:0;display:grid;grid-template-columns:54px minmax(0,1fr);gap:9px;align-items:center;padding:10px;border:1px solid #526b8d;border-radius:5px;background:linear-gradient(145deg,#1b3151,#0b162a)}
+.weapon-art{grid-row:span 2;width:54px;height:66px;display:grid;place-items:center;position:relative;border:1px solid var(--weapon-color);background:radial-gradient(circle,var(--weapon-color),transparent 70%);background-color:#0a1325}
+.weapon-art span{font-size:35px;color:var(--weapon-color);text-shadow:0 0 15px var(--weapon-color);transform:rotate(-35deg)}.weapon-art i{position:absolute;inset:7px;border:1px solid var(--weapon-color);transform:rotate(45deg)}
+.weapon-info{min-width:0}.weapon-info small{display:block;font:8px Orbitron;color:#a9c5e5;letter-spacing:1px}.weapon-info b{display:block;font:11px Orbitron;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:4px 0}.weapon-info p{font-size:10px;color:#9fb2cd;margin:0 0 4px}.weapon-info strong{font:10px Orbitron;color:#a8f4ff}
+.forge-btn{grid-column:2;justify-self:stretch;padding:7px 5px;border:1px solid #8bdff2;background:linear-gradient(180deg,#28618a,#123354);font:9px Orbitron}.forge-btn:disabled{border-color:#6b819c;background:#24364e;color:#b8c8dc;opacity:1}
+.rarity-epic{border-color:#9872d2}.rarity-legendary{border-color:#d3a34e}.rarity-mythic{border-color:#f2d27d}
+.armory-foot{padding:10px 2px 2px;color:#a8bad3;font-size:11px}.armory-foot b{color:#ffdf8c}
+@media(max-width:520px){.class-card{min-height:125px}.class-icon{font-size:34px;height:40px}.class-card small{font-size:11px}.weapon-grid{grid-template-columns:1fr}.weapon-card{grid-template-columns:58px minmax(0,1fr) 84px}.weapon-art{grid-row:1;width:58px}.forge-btn{grid-column:3;grid-row:1}.weapon-info{grid-column:2;grid-row:1}.game-screen{inset:64px 0 70px}.combat-hud{height:96px;padding:5px 8px}.action-buttons{gap:5px}.action{width:47px;height:47px}.action.attack{width:57px;height:57px}.energy-wrap{width:84px}}
+@media(max-height:650px){.topbar{height:54px}.screen{inset:54px 0 0}.game-screen{inset:54px 0 60px}.class-card{min-height:105px}.hero-copy{margin-bottom:8px}.combat-hud{height:80px}.bottom-nav{height:60px}.panel{bottom:66px}}
