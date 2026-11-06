@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="256" viewBox="0 0 512 256">
+<title>Shadow Hound animated sprite sheet</title><defs>
+<radialGradient id="fur"><stop stop-color="#6976bd"/><stop offset="1" stop-color="#202747"/></radialGradient>
+<linearGradient id="mane" x2="0" y2="1"><stop stop-color="#a78bfa"/><stop offset="1" stop-color="#4b3b83"/></linearGradient>
+<filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<g id="frames" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<g transform="translate(0 0)">
+<ellipse cx="63" cy="111" rx="39" ry="7" fill="#111a37" opacity=".5"/>
+<g transform="translate(0 0)">
+<path d="M31 73 Q8 58 18 40 Q31 49 40 58" stroke="#282e5a" stroke-width="10"/>
+<path d="M31 73 Q8 58 18 40" stroke="#8b79df" stroke-width="3"/>
+<path d="M39 69 Q55 48 86 62 Q101 70 99 88 Q80 104 47 91Z" fill="url(#fur)" stroke="#a5a9ed" stroke-width="2"/>
+<path d="M43 66 Q49 44 69 46 L87 61 L76 70Z" fill="url(#mane)" stroke="#c4b5fd" stroke-width="2"/>
+<path d="M72 51 L78 29 L88 51 L94 35 L99 62" fill="#3b376d" stroke="#a78bfa" stroke-width="3"/>
+<path d="M91 70 Q111 68 115 82 L101 91 L84 86Z" fill="#31365f" stroke="#a5a9ed" stroke-width="2"/>
+<path d="M108 78 L119 81 L108 87Z" fill="#c4b5fd"/>
+<path d="M91 73 L101 75" stroke="#f8fafc" stroke-width="2"/>
+<path d="M101 72 L108 74" stroke="#70f6ff" stroke-width="5" filter="url(#glow)"/>
+<path d="M47 87 L37 105 L30 107 M68 89 L75 105 L83 107" stroke="#252b50" stroke-width="9"/>
+<path d="M47 87 L37 105 M68 89 L75 105" stroke="#858ad0" stroke-width="2"/>
+
+</g></g><g transform="translate(128 0)">
+<ellipse cx="63" cy="111" rx="39" ry="7" fill="#111a37" opacity=".5"/>
+<g transform="translate(0 -3)">
+<path d="M31 73 Q8 60 18 40 Q31 49 40 58" stroke="#282e5a" stroke-width="10"/>
+<path d="M31 73 Q8 60 18 40" stroke="#8b79df" stroke-width="3"/>
+<path d="M39 69 Q55 48 86 62 Q101 70 99 88 Q80 104 47 91Z" fill="url(#fur)" stroke="#a5a9ed" stroke-width="2"/>
+<path d="M43 66 Q49 44 69 46 L87 61 L76 70Z" fill="url(#mane)" stroke="#c4b5fd" stroke-width="2"/>
+<path d="M72 51 L78 29 L88 51 L94 35 L99 62" fill="#3b376d" stroke="#a78bfa" stroke-width="3"/>
+<path d="M91 70 Q111 68 115 82 L101 91 L84 86Z" fill="#31365f" stroke="#a5a9ed" stroke-width="2"/>
+<path d="M108 78 L119 81 L108 87Z" fill="#c4b5fd"/>
+<path d="M91 73 L101 75" stroke="#f8fafc" stroke-width="2"/>
+<path d="M101 72 L108 74" stroke="#70f6ff" stroke-width="5" filter="url(#glow)"/>
+<path d="M47 87 L42 105 L35 107 M68 89 L70 105 L78 107" stroke="#252b50" stroke-width="9"/>
+<path d="M47 87 L42 105 M68 89 L70 105" stroke="#858ad0" stroke-width="2"/>
+
+</g></g><g transform="translate(256 0)">
+<ellipse cx="63" cy="111" rx="39" ry="7" fill="#111a37" opacity=".5"/>
+<g transform="translate(0 0)">
+<path d="M31 73 Q8 62 18 40 Q31 49 40 58" stroke="#282e5a" stroke-width="10"/>
+<path d="M31 73 Q8 62 18 40" stroke="#8b79df" stroke-width="3"/>
+<path d="M39 69 Q55 48 86 62 Q101 70 99 88 Q80 104 47 91Z" fill="url(#fur)" stroke="#a5a9ed" stroke-width="2"/>
+<path d="M43 66 Q49 44 69 46 L87 61 L76 70Z" fill="url(#mane)" stroke="#c4b5fd" stroke-width="2"/>
+<path d="M72 51 L78 29 L88 51 L94 35 L99 62" fill="#3b376d" stroke="#a78bfa" stroke-width="3"/>
+<path d="M91 70 Q111 68 115 82 L101 91 L84 86Z" fill="#31365f" stroke="#a5a9ed" stroke-width="2"/>
+<path d="M108 78 L119 81 L108 87Z" fill="#c4b5fd"/>
+<path d="M91 73 L101 75" stroke="#f8fafc" stroke-width="2"/>
+<path d="M101 72 L108 74" stroke="#70f6ff" stroke-width="5" filter="url(#glow)"/>
+<path d="M47 87 L45 105 L38 107 M68 89 L67 105 L75 107" stroke="#252b50" stroke-width="9"/>
+<path d="M47 87 L45 105 M68 89 L67 105" stroke="#858ad0" stroke-width="2"/>
+
+</g></g><g transform="translate(384 0)">
+<ellipse cx="63" cy="111" rx="39" ry="7" fill="#111a37" opacity=".5"/>
+<g transform="translate(0 3)">
+<path d="M31 73 Q8 64 18 40 Q31 49 40 58" stroke="#282e5a" stroke-width="10"/>
+<path d="M31 73 Q8 64 18 40" stroke="#8b79df" stroke-width="3"/>
+<path d="M39 69 Q55 48 86 62 Q101 70 99 88 Q80 104 47 91Z" fill="url(#fur)" stroke="#a5a9ed" stroke-width="2"/>
+<path d="M43 66 Q49 44 69 46 L87 61 L76 70Z" fill="url(#mane)" stroke="#c4b5fd" stroke-width="2"/>
+<path d="M72 51 L78 29 L88 51 L94 35 L99 62" fill="#3b376d" stroke="#a78bfa" stroke-width="3"/>
+<path d="M91 70 Q111 68 115 82 L101 91 L84 86Z" fill="#31365f" stroke="#a5a9ed" stroke-width="2"/>
+<path d="M108 78 L119 81 L108 87Z" fill="#c4b5fd"/>
+<path d="M91 73 L101 75" stroke="#f8fafc" stroke-width="2"/>
+<path d="M101 72 L108 74" stroke="#70f6ff" stroke-width="5" filter="url(#glow)"/>
+<path d="M47 87 L38 105 L31 107 M68 89 L74 105 L82 107" stroke="#252b50" stroke-width="9"/>
+<path d="M47 87 L38 105 M68 89 L74 105" stroke="#858ad0" stroke-width="2"/>
+
+</g></g><g transform="translate(0 128)">
+<ellipse cx="63" cy="111" rx="39" ry="7" fill="#111a37" opacity=".5"/>
+<g transform="translate(0 0)">
+<path d="M31 73 Q8 58 18 40 Q31 49 40 58" stroke="#282e5a" stroke-width="10"/>
+<path d="M31 73 Q8 58 18 40" stroke="#8b79df" stroke-width="3"/>
+<path d="M39 69 Q55 48 86 62 Q101 70 99 88 Q80 104 47 91Z" fill="url(#fur)" stroke="#a5a9ed" stroke-width="2"/>
+<path d="M43 66 Q49 44 69 46 L87 61 L76 70Z" fill="url(#mane)" stroke="#c4b5fd" stroke-width="2"/>
+<path d="M72 51 L78 29 L88 51 L94 35 L99 62" fill="#3b376d" stroke="#a78bfa" stroke-width="3"/>
+<path d="M91 70 Q111 68 115 82 L101 91 L84 86Z" fill="#31365f" stroke="#a5a9ed" stroke-width="2"/>
+<path d="M108 78 L119 81 L108 87Z" fill="#c4b5fd"/>
+<path d="M91 73 L101 75" stroke="#f8fafc" stroke-width="2"/>
+<path d="M101 72 L108 74" stroke="#70f6ff" stroke-width="5" filter="url(#glow)"/>
+<path d="M47 87 L37 105 L30 107 M68 89 L75 105 L83 107" stroke="#252b50" stroke-width="9"/>
+<path d="M47 87 L37 105 M68 89 L75 105" stroke="#858ad0" stroke-width="2"/>
+<path d="M105 82 Q123 91 118 103" stroke="#e0c5ff" stroke-width="4"/><path d="M112 94 L122 98" stroke="#70f6ff" stroke-width="3"/>
+</g></g><g transform="translate(128 128)">
+<ellipse cx="63" cy="111" rx="39" ry="7" fill="#111a37" opacity=".5"/>
+<g transform="translate(0 -3)">
+<path d="M31 73 Q8 60 18 40 Q31 49 40 58" stroke="#282e5a" stroke-width="10"/>
+<path d="M31 73 Q8 60 18 40" stroke="#8b79df" stroke-width="3"/>
+<path d="M39 69 Q55 48 86 62 Q101 70 99 88 Q80 104 47 91Z" fill="url(#fur)" stroke="#a5a9ed" stroke-width="2"/>
+<path d="M43 66 Q49 44 69 46 L87 61 L76 70Z" fill="url(#mane)" stroke="#c4b5fd" stroke-width="2"/>
+<path d="M72 51 L78 29 L88 51 L94 35 L99 62" fill="#3b376d" stroke="#a78bfa" stroke-width="3"/>
+<path d="M91 70 Q111 68 115 82 L101 91 L84 86Z" fill="#31365f" stroke="#a5a9ed" stroke-width="2"/>
+<path d="M108 78 L119 81 L108 87Z" fill="#c4b5fd"/>
+<path d="M91 73 L101 75" stroke="#f8fafc" stroke-width="2"/>
+<path d="M101 72 L108 74" stroke="#70f6ff" stroke-width="5" filter="url(#glow)"/>
+<path d="M47 87 L42 105 L35 107 M68 89 L70 105 L78 107" stroke="#252b50" stroke-width="9"/>
+<path d="M47 87 L42 105 M68 89 L70 105" stroke="#858ad0" stroke-width="2"/>
+<path d="M105 82 Q123 91 118 103" stroke="#e0c5ff" stroke-width="4"/><path d="M112 94 L122 98" stroke="#70f6ff" stroke-width="3"/>
+</g></g><g transform="translate(256 128)">
+<ellipse cx="63" cy="111" rx="39" ry="7" fill="#111a37" opacity=".5"/>
+<g transform="translate(0 0)">
+<path d="M31 73 Q8 62 18 40 Q31 49 40 58" stroke="#282e5a" stroke-width="10"/>
+<path d="M31 73 Q8 62 18 40" stroke="#8b79df" stroke-width="3"/>
+<path d="M39 69 Q55 48 86 62 Q101 70 99 88 Q80 104 47 91Z" fill="url(#fur)" stroke="#a5a9ed" stroke-width="2"/>
+<path d="M43 66 Q49 44 69 46 L87 61 L76 70Z" fill="url(#mane)" stroke="#c4b5fd" stroke-width="2"/>
+<path d="M72 51 L78 29 L88 51 L94 35 L99 62" fill="#3b376d" stroke="#a78bfa" stroke-width="3"/>
+<path d="M91 70 Q111 68 115 82 L101 91 L84 86Z" fill="#31365f" stroke="#a5a9ed" stroke-width="2"/>
+<path d="M108 78 L119 81 L108 87Z" fill="#c4b5fd"/>
+<path d="M91 73 L101 75" stroke="#f8fafc" stroke-width="2"/>
+<path d="M101 72 L108 74" stroke="#70f6ff" stroke-width="5" filter="url(#glow)"/>
+<path d="M47 87 L45 105 L38 107 M68 89 L67 105 L75 107" stroke="#252b50" stroke-width="9"/>
+<path d="M47 87 L45 105 M68 89 L67 105" stroke="#858ad0" stroke-width="2"/>
+<path d="M105 82 Q123 91 118 103" stroke="#e0c5ff" stroke-width="4"/><path d="M112 94 L122 98" stroke="#70f6ff" stroke-width="3"/>
+</g></g><g transform="translate(384 128)">
+<ellipse cx="63" cy="111" rx="39" ry="7" fill="#111a37" opacity=".5"/>
+<g transform="translate(0 3)">
+<path d="M31 73 Q8 64 18 40 Q31 49 40 58" stroke="#282e5a" stroke-width="10"/>
+<path d="M31 73 Q8 64 18 40" stroke="#8b79df" stroke-width="3"/>
+<path d="M39 69 Q55 48 86 62 Q101 70 99 88 Q80 104 47 91Z" fill="url(#fur)" stroke="#a5a9ed" stroke-width="2"/>
+<path d="M43 66 Q49 44 69 46 L87 61 L76 70Z" fill="url(#mane)" stroke="#c4b5fd" stroke-width="2"/>
+<path d="M72 51 L78 29 L88 51 L94 35 L99 62" fill="#3b376d" stroke="#a78bfa" stroke-width="3"/>
+<path d="M91 70 Q111 68 115 82 L101 91 L84 86Z" fill="#31365f" stroke="#a5a9ed" stroke-width="2"/>
+<path d="M108 78 L119 81 L108 87Z" fill="#c4b5fd"/>
+<path d="M91 73 L101 75" stroke="#f8fafc" stroke-width="2"/>
+<path d="M101 72 L108 74" stroke="#70f6ff" stroke-width="5" filter="url(#glow)"/>
+<path d="M47 87 L38 105 L31 107 M68 89 L74 105 L82 107" stroke="#252b50" stroke-width="9"/>
+<path d="M47 87 L38 105 M68 89 L74 105" stroke="#858ad0" stroke-width="2"/>
+<path d="M105 82 Q123 91 118 103" stroke="#e0c5ff" stroke-width="4"/><path d="M112 94 L122 98" stroke="#70f6ff" stroke-width="3"/>
+</g></g>
+</g></svg>
