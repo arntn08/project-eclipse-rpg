@@ -41,4 +41,87 @@ $("startBtn").onclick=start;$("attackBtn").onpointerdown=e=>{e.preventDefault();
 window.addEventListener("keydown",e=>{keys[e.key]=true;if(e.key==="f"||e.key===" ")attack();if(e.key==="q")skill();if(e.key==="e")ultimate();if(e.key==="Shift")dash()});window.addEventListener("keyup",e=>keys[e.key]=false);window.addEventListener("blur",()=>{keys={};held=false});
 let joyEl=$("joystick"),stick=$("stick");function joyMove(e){let r=joyEl.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,m=27,l=Math.hypot(dx,dy)||1;joy.x=clamp(dx/l*Math.min(l,m)/m,-1,1);joy.y=clamp(dy/l*Math.min(l,m)/m,-1,1);stick.style.transform='translate('+joy.x*24+'px,'+joy.y*24+'px)'}joyEl.onpointerdown=e=>{e.preventDefault();joyId=e.pointerId;joyEl.setPointerCapture(joyId);joyMove(e)};joyEl.onpointermove=e=>{if(e.pointerId===joyId)joyMove(e)};function joyEnd(){joyId=null;joy.x=joy.y=0;stick.style.transform="translate(0,0)"}joyEl.onpointerup=joyEnd;joyEl.onpointercancel=joyEnd;
 resize();persist();
+}
+/* ALPHA 0.4–0.9 SYSTEM EXPANSION */
+save.achievements=save.achievements||{};
+save.dailyProgress=save.dailyProgress||0;
+save.soundEnabled=save.soundEnabled!==false;
+save.potionCount=save.potionCount||0;
+save.weaponRank=save.weaponRank||0;
+save.armorRank=save.armorRank||0;
+let audioCtx=null;
+function sound(freq=440,duration=.08,type="sine"){
+ if(!save.soundEnabled)return;
+ try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")audioCtx.resume();let o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(.045,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+duration);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+duration)}catch{}
+}
+const oldHit=hit;
+hit=function(e,n,color){oldHit(e,n,color);sound(e===boss?170:330,.055,"triangle")};
+const oldSkill=skill;
+skill=function(){let before=energy;oldSkill();if(energy<before)sound(620,.16,"sawtooth")};
+const oldUltimate=ultimate;
+ultimate=function(){if(ult>=100){oldUltimate();sound(95,.5,"sawtooth")}};
+const oldKill=kill;
+kill=function(e){if(e.dead)return;oldKill(e);save.dailyProgress=(save.dailyProgress||0)+1;checkAchievements();if(Math.random()<.16){save.potionCount++;say("LOOT FOUND · RIFT POTION +1")}persist()};
+function checkAchievements(){
+ const tests=[["first_blood",save.kills>=1,"FIRST BLOOD"],["slayer_25",save.kills>=25,"RIFT SLAYER"],["slayer_100",save.kills>=100,"ABYSS BREAKER"],["level_5",save.level>=5,"AWAKENED"],["rich_500",save.gold>=500,"TREASURE HUNTER"]];
+ tests.forEach(([id,ok,label])=>{if(ok&&!save.achievements[id]){save.achievements[id]=true;say("ACHIEVEMENT UNLOCKED · "+label)}});
+}
+const oldHero=hero;
+hero=function(){
+ oldHero();
+ if(!p)return;
+ const a=classes[chosen],x=p.x-camera;
+ c.save();c.translate(x,p.y-(p.jump>0?Math.sin((p.jump/.38)*Math.PI)*38:0));if(p.face<0)c.scale(-1,1);
+ c.globalAlpha=.9;c.lineWidth=3;c.strokeStyle=a.color;c.shadowColor=a.color;c.shadowBlur=12;
+ if(chosen==="Mage"){c.beginPath();c.arc(0,-64,29+Math.sin(performance.now()/160)*2,0,Math.PI*2);c.stroke();c.fillStyle="#c69aff";c.beginPath();c.arc(19,-43,5,0,7);c.fill();c.beginPath();c.moveTo(15,-37);c.lineTo(26,-78);c.stroke()}
+ else if(chosen==="Archer"){c.beginPath();c.arc(26,-48,17,-1.2,1.2);c.stroke();c.beginPath();c.moveTo(26,-65);c.lineTo(26,-31);c.stroke();c.beginPath();c.moveTo(8,-48);c.lineTo(43,-48);c.stroke()}
+ else{c.beginPath();c.moveTo(20,-42);c.lineTo(43,-72);c.lineTo(47,-69);c.stroke()}
+ c.restore();
+};
+const oldAi=ai;
+ai=function(e,dt,isBoss=false){
+ if(isBoss){e.phase=e.phase||1;let pct=e.hp/e.max;e.phase=pct<.32?3:pct<.68?2:1;e.speed=45+(e.phase-1)*22;e.atk=Math.max(0,e.atk-dt*(e.phase===3?1.3:1));if(e.phase!==e.lastPhase){e.lastPhase=e.phase;say("OVERLORD PHASE "+e.phase+" — "+(e.phase===3?"ENRAGED":"POWER SURGE"));fx(e.x,G()-40,"#ff5b91",28)}}
+ oldAi(e,dt,isBoss);
+};
+const oldBackground=background;
+background=function(w,h){
+ oldBackground(w,h);
+ const palettes={1:["#142b4c","#294565"],2:["#251a43","#49305d"],3:["#35172e","#632d50"]};
+ const colors=palettes[stage]||palettes[1];
+ let g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,colors[0]);g.addColorStop(1,colors[1]);c.globalAlpha=.28;c.fillStyle=g;c.fillRect(0,0,w,h);c.globalAlpha=1;
+};
+function panel(name){
+ $("panel").classList.remove("hidden");
+ document.querySelectorAll(".bottom-nav button").forEach(b=>b.classList.toggle("nav-active",b.dataset.panel===name));
+ const body=$("panelBody"),row=(title,desc,action,label)=>'<div class="panel-row"><div><b>'+title+'</b><small>'+desc+'</small></div><button class="mini-btn" data-action="'+action+'">'+label+'</button></div>';
+ if(name==="quests"){
+  $("panelTitle").textContent="QUESTS & ACHIEVEMENTS";
+  body.innerHTML=row("Daily Rift Hunt",(save.dailyProgress||0)+"/5 defeats today","daily","REWARD 40G")+row("Overlord Contract","Defeat the final boss","bossquest","TRACK")+row("First Blood","Defeat your first enemy", "none",save.achievements.first_blood?"UNLOCKED":"LOCKED")+row("Rift Slayer","Defeat 25 enemies","none",save.achievements.slayer_25?"UNLOCKED":"LOCKED")+row("Abyss Breaker","Defeat 100 enemies","none",save.achievements.slayer_100?"UNLOCKED":"LOCKED")+row("Awakened","Reach hunter level 5","none",save.achievements.level_5?"UNLOCKED":"LOCKED")+row("Treasure Hunter","Hold 500 gold","none",save.achievements.rich_500?"UNLOCKED":"LOCKED");
+ }else if(name==="inventory"){
+  $("panelTitle").textContent="ARMORY & INVENTORY";
+  body.innerHTML=row("Equipped · "+save.weapon,"Weapon · +"+save.attackBonus+" ATK","none","EQUIPPED")+row("Equipped · "+save.armor,"Armor · "+save.defense+" DEF","none","EQUIPPED")+row("Azure Edge","Rare weapon · +8 ATK · 80G","buyweapon","BUY 80G")+row("Riftpiercer","Epic weapon · +15 ATK · 180G","epicweapon","BUY 180G")+row("Guardian Mail","Rare armor · +7 DEF · 80G","buyarmor","BUY 80G")+row("Eclipse Mantle","Epic armor · +12 DEF · 180G","epicarmor","BUY 180G")+row("Rift Potion ×"+save.potionCount,"Restore 45 HP during a run","potion","USE POTION");
+ }else if(name==="skills"){
+  $("panelTitle").textContent="SKILL TREE";
+  body.innerHTML=row("Power Core · Rank "+save.skillRanks,"Max rank 5 · +3 ATK per rank · 100G","upgrade",save.skillRanks>=5?"MAX RANK":"UPGRADE")+row("Vitality Core","Increase maximum HP · 75G","vitality","UPGRADE 75G")+row(classes[chosen].skill,"Class skill · Energy "+classes[chosen].cost,"none","UNLOCKED")+row(classes[chosen].ult,"Ultimate · Build gauge through combat","none","UNLOCKED")+row("Hunter's Instinct","Dash grants brief invulnerability","none","PASSIVE");
+ }else if(name==="stats"){
+  $("panelTitle").textContent="HUNTER PROFILE";
+  body.innerHTML=row("LEVEL "+save.level,chosen+" · "+save.xp+"/"+(save.level*100)+" XP","none","✧ "+save.gold+"G")+row("Combat record",save.kills+" defeats · "+(save.achievements?Object.keys(save.achievements).length:0)+" achievements","none","RECORD")+row("Rift Potions",String(save.potionCount),"none","IN BAG")+row("Audio",save.soundEnabled?"Sound effects enabled":"Sound effects muted","sound",save.soundEnabled?"MUTE":"ENABLE")+row("Save data","Stored locally in this browser","none","AUTOSAVE")+row("Return to title","Leave current run and return to class select","title","EXIT RUN");
+ }
+}
+$("panelBody").onclick=function(ev){
+ const a=ev.target.dataset.action;if(!a)return;
+ const spend=n=>{if(save.gold<n){say("NOT ENOUGH GOLD");return false}save.gold-=n;return true};
+ if(a==="daily"){if((save.dailyProgress||0)<5)say("DEFEAT 5 ENEMIES TO COMPLETE");else if(save.dailyClaimed)say("DAILY REWARD ALREADY CLAIMED");else{save.gold+=40;save.dailyClaimed=true;say("DAILY REWARD · +40 GOLD")}}
+ if(a==="buyweapon"&&spend(80)){save.weapon="Azure Edge";save.attackBonus+=8;say("AZURE EDGE EQUIPPED")}
+ if(a==="epicweapon"&&spend(180)){save.weapon="Riftpiercer";save.attackBonus+=15;say("RIFTPIERCER EQUIPPED")}
+ if(a==="buyarmor"&&spend(80)){save.armor="Guardian Mail";save.defense+=7;say("GUARDIAN MAIL EQUIPPED")}
+ if(a==="epicarmor"&&spend(180)){save.armor="Eclipse Mantle";save.defense+=12;say("ECLIPSE MANTLE EQUIPPED")}
+ if(a==="upgrade"&&save.skillRanks<5&&spend(100)){save.skillRanks++;save.attackBonus+=3;say("POWER CORE RANK "+save.skillRanks)}
+ if(a==="vitality"&&spend(75)){if(p){p.max+=18;p.hp=Math.min(p.max,p.hp+18)}save.maxHpBonus=(save.maxHpBonus||0)+18;say("VITALITY CORE UPGRADED")}
+ if(a==="potion"){if(save.potionCount>0&&p){save.potionCount--;p.hp=Math.min(p.max,p.hp+45);say("RIFT POTION USED · +45 HP")}else say("NO POTIONS OR NO ACTIVE HUNTER")}
+ if(a==="sound"){save.soundEnabled=!save.soundEnabled;say(save.soundEnabled?"SOUND ENABLED":"SOUND MUTED")}
+ if(a==="title"){running=false;$("gameScreen").classList.add("hidden");$("bottomNav").classList.add("hidden");$("startScreen").classList.remove("hidden");$("panel").classList.add("hidden")}
+ checkAchievements();persist();panel(name);
+};
+
 })();
