@@ -6,6 +6,10 @@ on:
       - 'index.html'
       - 'styles.css'
       - 'game.js'
+      - 'game-v03.js'
+      - 'eclipse-hunter.webp'
+      - 'assets/**'
+      - 'README.md'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 permissions:
