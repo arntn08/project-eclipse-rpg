@@ -8,3 +8,34 @@
 .class-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.class-card{min-height:118px}.key-hint{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:4;padding:5px 9px;border:1px solid #3b5b7c;border-radius:5px;background:#081326c9;color:#c6d8ed;font:8px Orbitron;white-space:nowrap;pointer-events:none}@media(min-width:700px){.class-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:540px){.key-hint{display:none}}
 
 .action.skill2{border-color:#a77cff}.action.skill2 span{color:#d5b0ff}
+
+/* Alpha 1.1 — ornate anime fantasy battle interface */
+:root{--cyan:#83eaff;--blue:#318dff;--violet:#b99aff;--gold:#ffe19a}
+#app{background:radial-gradient(ellipse at 50% 20%,#344f7a 0,#142847 52%,#080e1d 100%)}
+.topbar{background:linear-gradient(180deg,#101d36f5,#081326f5);border-bottom:1px solid #7896bb66;box-shadow:0 5px 20px #0008}
+.brand .sigil{filter:drop-shadow(0 0 8px #75eaff)}
+.class-card{border:1px solid #7899bd88;border-radius:8px;background:linear-gradient(145deg,#344f78ee,#111d35 65%,#090f20);box-shadow:inset 0 1px #d7eaff22,0 5px 15px #0007}
+.class-card.selected{border-color:#9cefff;box-shadow:0 0 0 1px #9cefff55,0 0 24px #55cfff55,inset 0 0 25px #6cdfff20}
+.primary-btn{border:1px solid #b9f5ff;background:linear-gradient(180deg,#438fc1,#164c88 58%,#102c55);box-shadow:inset 0 1px #fff7,0 0 22px #3dbfff66;border-radius:4px}
+.hud{background:linear-gradient(180deg,#132846f5,#081326f2);border-bottom:1px solid #9cbce055;box-shadow:0 4px 16px #0008}
+.avatar{border-radius:50%;border:2px solid #9deeff;background:radial-gradient(circle,#315b86,#101d36);box-shadow:0 0 14px #69dfff66}
+.meter{border:1px solid #a6c6e044;background:#091326;box-shadow:inset 0 1px 3px #000}
+.hp span{background:linear-gradient(90deg,#c82d54,#ff839a,#ffd0d5)}
+.xp span,.energy span{background:linear-gradient(90deg,#49bfff,#b2f5ff)}
+.combat-hud{background:linear-gradient(180deg,#132846,#081326);border-top:1px solid #91b8dc66}
+.action{width:56px;height:56px;border:2px solid #83dfff;background:radial-gradient(circle at 35% 25%,#3e78a8,#142849 65%,#071326);box-shadow:inset 0 0 0 2px #c6f6ff33,0 4px 12px #000b,0 0 12px #40baff33}
+.action span{font-size:21px;text-shadow:0 0 9px currentColor}
+.action.attack{width:66px;height:66px;border:2px solid #ffc4d2;background:radial-gradient(circle at 35% 25%,#a94d72,#351b39 68%,#140e23);box-shadow:inset 0 0 0 2px #ffe3eb33,0 0 17px #ff5b9a55}
+.action.skill2{border-color:#c9a4ff;background:radial-gradient(circle at 35% 25%,#7054a8,#1b1940 70%)}
+.action.ultimate-btn{border-color:#e1b5ff;background:radial-gradient(circle at 35% 25%,#9a57c6,#291843 70%);box-shadow:inset 0 0 0 2px #fff3,0 0 18px #a35dff66}
+.joystick{border:2px solid #9cecff99;background:radial-gradient(circle,#6bcfff33,#0b1c37aa);box-shadow:inset 0 0 15px #6ddfff44,0 0 14px #2e9fff33}
+.stick{background:radial-gradient(circle at 35% 30%,#efffff,#65c9f5 65%,#22639b);border:2px solid #e3fbff;box-shadow:0 0 16px #66dfff}
+.bottom-nav{background:linear-gradient(180deg,#122642,#081326);border-top:1px solid #87b5dc66}
+.bottom-nav button{min-width:58px;text-shadow:0 0 8px #67dfff44}
+.bottom-nav .nav-active{color:#a6f0ff}
+.panel{border:1px solid #83b9df;border-radius:7px;background:linear-gradient(145deg,#152b4bfa,#081326fa);box-shadow:0 0 25px #000c,0 0 20px #54bfff22}
+.panel-row{border-color:#55769c;background:linear-gradient(100deg,#1b3557,#0d1a30)}
+.panel-head b{color:#9defff;text-shadow:0 0 10px #4ccfff66}
+.mini-btn{border:1px solid #9ceaff;background:linear-gradient(180deg,#286a9c,#14375e);box-shadow:inset 0 1px #fff4}
+.key-hint{border:1px solid #9ccbe077;background:#07152bd9;color:#dff7ff;box-shadow:0 2px 12px #0008}
+@media(max-width:540px){.action-buttons{gap:5px}.action{width:48px;height:48px}.action.attack{width:58px;height:58px}.action span{font-size:18px}}
