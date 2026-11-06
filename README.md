@@ -1,45 +1,46 @@
 # PROJECT ECLIPSE
 
-**Alpha 0.9 — Expanded standalone mobile browser action RPG (in development)**
+**Alpha 1.0 — Side-scrolling anime action RPG (in development)**
 
-Project ECLIPSE is a touchscreen-friendly side-scrolling anime action RPG. It is a standalone browser game and remains separate from the original Roblox prototype.
+Standalone browser game, separate from the original Roblox prototype.
 
 ## Play
 https://arntn08.github.io/project-eclipse-rpg/
 
-Open in a modern browser, choose Swordsman, Mage, or Archer, then enter the Rift. Landscape mode is recommended on phones and tablets.
+## Playable hunters
+- **Swordsman** — close-range heavy blade attacks.
+- **Mage** — ranged arcane magic and area attacks.
+- **Archer** — long-range precision attacks.
+- **Assassin** — fast movement, shadow blades and critical-style attacks.
 
-## Current features
-- Three selectable classes with distinct stats, class-colored combat presentation, weapon/aura overlays, and class skills/ultimates.
-- 4×4 hunter sprite sheet support (eclipse-hunter.webp) with canvas fallback if the image is unavailable.
-- Touch joystick, Attack, Skill, Ultimate, and Dash; keyboard controls are also supported.
-- Three themed rift stages, enemy variants, elite-style brute encounters, and the Eclipse Overlord with escalating combat phases.
-- XP, leveling, gold, equipment purchases, rare/epic gear, Power Core and Vitality upgrades, and consumable Rift Potions.
-- Daily defeat quest with local-date rollover, achievement milestones, combat records, and hunter profile.
-- Settings panel with sound-effect toggle and control/display tips.
-- Browser localStorage autosave and migration fallback for earlier Alpha 0.2 data.
+Mage, Archer and Assassin now have distinct canvas-drawn character designs. Swordsman uses the existing animated hunter sprite sheet when it loads, with a built-in fallback.
 
-## Controls
+## Grand Chase-inspired controls
 
-| Action | Touch | Keyboard |
-|---|---|---|
-| Move | On-screen joystick | WASD / Arrow keys |
-| Basic attack | ATTACK | F / Space |
-| Class skill | SKILL | Q |
-| Ultimate | ULT | E |
-| Dash | DASH | Shift |
-| Menus | Bottom navigation | Touch/click |
+| Input | Action |
+|---|---|
+| ← / → | Move left / right |
+| ↑ | Jump |
+| ↓ | Guard and reduce incoming damage |
+| Z | Basic attack / combo starter |
+| X | Class skill 1 |
+| C | Class skill 2 |
+| V | Ultimate when the gauge is full |
+| Shift | Dash / evade |
 
-## Sprite artwork
-The game loads eclipse-hunter.webp from the repository root. The 4×4 sheet is expected to contain idle, run, attack, and skill/ultimate rows, four frames per row. If unavailable, the game uses its built-in canvas fallback. The current sprite depicts the hunter base character; Mage and Archer receive class-specific visual effects and weapon silhouettes rather than separate full sprite sheets.
+Touch controls remain available on phones and tablets, including the joystick and on-screen combat buttons.
 
-## Save data and limitations
-Progress is stored locally in the current browser. It does not sync across devices and clearing browser site data may erase it. Daily quest progress rolls over using the device's local date. Sound effects are synthesized in-browser and can be muted in Settings.
+## Monsters and encounters
+- Shadow Shades, Hounds, Brutes, Wraiths, Slimes and Golems.
+- Three rift stages with different atmosphere and enemy strength.
+- Eclipse Overlord boss with three escalating combat phases.
+- Enemy telegraphs, health bars, hit effects, loot drops and potion rewards.
 
-This remains an early prototype. It has not been verified through a complete real-device playtest after this update. Please test combat, touch controls, purchases, save/load, and boss completion on the live Pages deployment.
+## Progression
+XP and levels, gold, rare and epic weapons/armor, Power Core and Vitality upgrades, Rift Potions, daily defeat quest, achievements, hunter profile, and local browser autosave.
+
+## Save and limitations
+Save data is stored in the current browser only; there is no cloud sync yet. This is an early prototype and has not been fully playtested on every device. Use a modern browser and landscape orientation on phones for the best layout.
 
 ## Original Roblox prototype
-The original Roblox/Rojo prototype is preserved separately. The browser game uses root index.html, styles.css, and game-v03.js; game.js remains the earlier Alpha 0.2 source.
-
-## Roadmap
-Future work: separate Mage and Archer sprite sheets, more dungeon maps and bosses, cloud saves, richer sound/music, accessibility options, and eventual 3D evolution.
+The original Roblox/Rojo prototype remains separate and preserved. The browser game uses root `index.html`, `styles.css`, and `game-v03.js`; `game.js` remains the earlier engine.
