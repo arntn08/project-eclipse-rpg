@@ -153,4 +153,96 @@ if(save.dailyDate!==localDay()){save.dailyDate=localDay();save.dailyProgress=0;s
 const startWithBonuses=start;
 start=function(){startWithBonuses();if(p&&save.maxHpBonus){p.max+=save.maxHpBonus;p.hp=p.max}persist()};
 
+
+/* ALPHA 1.4 — CREATURES, CAMERA & WEAPON FORGE */
+const forgeWeapons=[
+{id:"iron_fang",name:"Iron Fang",kind:"blade",cost:0,atk:0,color:"#dce8f5",rarity:"COMMON"},
+{id:"azure_edge",name:"Azure Edge",kind:"blade",cost:80,atk:8,color:"#62eaff",rarity:"RARE"},
+{id:"mooncleaver",name:"Mooncleaver",kind:"great",cost:180,atk:15,color:"#b6c8ff",rarity:"RARE"},
+{id:"rift_katana",name:"Rift Katana",kind:"katana",cost:350,atk:25,color:"#ff7fc8",rarity:"EPIC"},
+{id:"celestial_staff",name:"Celestial Staff",kind:"staff",cost:420,atk:28,color:"#c7a0ff",rarity:"EPIC"},
+{id:"starfall_bow",name:"Starfall Bow",kind:"bow",cost:480,atk:30,color:"#9df3d0",rarity:"EPIC"},
+{id:"void_daggers",name:"Void Daggers",kind:"dual",cost:650,atk:38,color:"#ff78d5",rarity:"LEGENDARY"},
+{id:"eclipse_reaver",name:"Eclipse Reaver",kind:"great",cost:1200,atk:58,color:"#ffe09a",rarity:"MYTHIC"}];
+save.ownedWeapons=Array.isArray(save.ownedWeapons)?save.ownedWeapons:["iron_fang"];
+if(!save.ownedWeapons.includes("iron_fang"))save.ownedWeapons.unshift("iron_fang");
+const legacy=forgeWeapons.find(w=>w.name===save.weapon);
+if(!save.weaponId){save.weaponId=legacy?legacy.id:"iron_fang";save.weaponBonus=legacy?legacy.atk:0}
+if(!Number.isFinite(save.weaponBonus))save.weaponBonus=0;
+function equippedWeapon(){return forgeWeapons.find(w=>w.id===save.weaponId)||forgeWeapons[0]}
+function equipForgeWeapon(w){let old=save.weaponBonus||0;save.weaponId=w.id;save.weapon=w.name;save.weaponBonus=w.atk;save.attackBonus=Math.max(0,(save.attackBonus||4)-old+w.atk);persist();say(w.name.toUpperCase()+" EQUIPPED")}
+function wave(){
+ transition=false;boss=null;foes=[];target=[0,6,8,10][stage]||6;
+ const types=["hound","shade","slime","brute","wraith","golem"];
+ for(let i=0;i<target;i++){let type=types[(i+stage*2)%types.length],hp=(type==="golem"?145:type==="brute"?112:type==="hound"?72:type==="slime"?56:64)+(stage-1)*20,ratio=i/Math.max(1,target-1);
+ foes.push({x:p.x+W()*(.43+.39*ratio),y:G(),r:type==="golem"?31:type==="brute"?29:type==="hound"?25:22,hp,max:hp,speed:(type==="hound"?104:type==="golem"?38:type==="brute"?48:type==="wraith"?82:64)+stage*5,atk:rnd(.65,1.5),wind:0,hit:0,type,seed:rnd(0,6.28)})}
+ $("stageName").textContent=["","RIFT OUTSKIRTS","FRACTURED HALL","ECLIPSE THRONE"][stage];$("objective").textContent="Defeat "+target+" rift creatures";
+}
+const updateBeforeCamera=update;
+update=function(dt){updateBeforeCamera(dt);if(p){p.x=Math.max(45,p.x);camera=Math.max(0,p.x-W()*.32)}};
+function drawMonster(e,isBoss=false){
+ let x=e.x-camera,y=e.y-(isBoss?45:18)+Math.sin(performance.now()/130+(e.seed||0))*3;if(x<-140||x>W()+140)return;
+ c.save();c.translate(x,y);if(e.x>p.x)c.scale(-1,1);
+ let glow=isBoss?"#ff477f":e.type==="hound"?"#a78aff":e.type==="slime"?"#62f5dc":e.type==="golem"?"#7ddcff":e.type==="wraith"?"#c29aff":e.type==="brute"?"#ff986c":"#aa8aff";
+ c.shadowColor=e.hit?"#fff":glow;c.shadowBlur=e.hit?26:18;
+ let g=c.createLinearGradient(0,-70,0,28);g.addColorStop(0,isBoss?"#e37ab1":e.type==="hound"?"#9d88dc":e.type==="slime"?"#9dfff0":e.type==="golem"?"#c0d8e8":e.type==="brute"?"#c87c78":"#9b83cf");g.addColorStop(1,isBoss?"#24172f":e.type==="slime"?"#137b8c":"#29213e");
+ const poly=(pts,fill)=>{c.beginPath();c.moveTo(...pts[0]);pts.slice(1).forEach(p=>c.lineTo(...p));c.closePath();c.fillStyle=fill;c.fill();c.strokeStyle="#17172c";c.lineWidth=2;c.stroke()};
+ const eye=(x,y)=>{c.fillStyle="#fff3f9";c.shadowColor=glow;c.shadowBlur=12;c.fillRect(x,y,7,4)};
+ if(isBoss||e.type==="boss"){
+  c.save();c.scale(1.35,1.35);poly([[-38,-15],[-48,-58],[-25,-83],[0,-72],[25,-83],[48,-58],[38,-15],[25,20],[-25,20]],g);
+  poly([[-33,-45],[-59,-82],[-47,-18],[-25,17]],"#402347");poly([[33,-45],[59,-82],[47,-18],[25,17]],"#402347");
+  poly([[-27,-67],[-45,-105],[-15,-86],[0,-115],[15,-86],[45,-105],[27,-67]],"#c28bfa");
+  poly([[-18,-53],[0,-66],[18,-53],[13,-26],[0,-15],[-13,-26]],"#19172c");eye(-13,-48);eye(6,-48);
+  c.shadowColor="#ff5b91";c.shadowBlur=20;c.fillStyle="#ff477f";c.beginPath();c.arc(0,-8,12,0,7);c.fill();c.restore();
+ }else if(e.type==="hound"){
+  c.strokeStyle="#25213d";c.lineWidth=9;c.lineCap="round";c.beginPath();c.moveTo(-16,4);c.lineTo(-23,24);c.moveTo(15,4);c.lineTo(22,24);c.moveTo(-2,5);c.lineTo(-7,24);c.moveTo(24,-6);c.quadraticCurveTo(44,-28,35,-39);c.stroke();
+  c.fillStyle=g;c.beginPath();c.ellipse(-2,-4,33,19,0,0,7);c.fill();poly([[-25,-13],[-41,-42],[-15,-26],[-7,-14]],"#9b84db");poly([[5,-16],[17,-43],[26,-18],[19,-5]],"#9b84db");
+  c.fillStyle=g;c.beginPath();c.ellipse(25,-13,20,14,0,0,7);c.fill();poly([[35,-11],[56,-4],[39,3]],"#6d579e");eye(29,-18);eye(44,-9);
+  for(let i=0;i<4;i++)poly([[-15+i*11,-19],[-9+i*11,-34],[-1+i*11,-17]],"#c7b6f0");
+ }else if(e.type==="slime"){
+  c.fillStyle=g;c.beginPath();c.ellipse(0,0,29,23,0,0,7);c.fill();c.strokeStyle="#184e69";c.lineWidth=2;c.stroke();
+  c.fillStyle="#3de3d2";c.beginPath();c.ellipse(0,3,14,11,0,0,7);c.fill();c.fillStyle="#efffff";c.fillRect(-12,-5,5,5);c.fillRect(8,-5,5,5);
+  poly([[-23,-10],[-16,-29],[-5,-13]],"#6cf3df");poly([[5,-13],[18,-32],[22,-7]],"#6cf3df");
+  c.globalAlpha=.5;c.fillStyle="#fff";for(let i=0;i<3;i++){c.beginPath();c.arc(-17+i*17,-18-(i%2)*8,3,0,7);c.fill()}c.globalAlpha=1;
+ }else if(e.type==="brute"){
+  poly([[-31,-46],[-49,-65],[-59,-39],[-43,-13],[-38,18],[-18,25],[18,25],[38,18],[43,-13],[59,-39],[49,-65],[31,-46],[18,-58],[-18,-58]],g);
+  poly([[-36,-48],[-58,-74],[-48,-29],[-29,-30]],"#d18a77");poly([[36,-48],[58,-74],[48,-29],[29,-30]],"#d18a77");
+  poly([[-20,-57],[-15,-78],[0,-67],[15,-78],[20,-57]],"#54374d");c.fillStyle="#ffce91";c.fillRect(-12,-41,8,5);c.fillRect(5,-41,8,5);
+  poly([[-34,-9],[-51,4],[-44,27],[-21,22]],"#70465a");poly([[34,-9],[51,4],[44,27],[21,22]],"#70465a");
+ }else if(e.type==="wraith"){
+  poly([[-23,-44],[-37,-23],[-28,-4],[-42,24],[-18,14],[-7,33],[4,12],[23,30],[17,6],[38,16],[26,-12],[33,-35],[15,-55],[0,-66]],g);
+  poly([[-17,-46],[-26,-73],[-5,-59],[5,-80],[20,-56],[23,-37]],"#c8b4ff");eye(-11,-32);eye(5,-32);
+  c.strokeStyle="#d8c4ff";c.lineWidth=3;c.beginPath();c.moveTo(-24,-4);c.quadraticCurveTo(-45,12,-34,33);c.moveTo(24,-5);c.quadraticCurveTo(44,10,33,32);c.stroke();
+ }else if(e.type==="golem"){
+  poly([[-31,-48],[-41,-30],[-34,15],[-18,26],[18,26],[34,15],[41,-30],[31,-48],[12,-58],[-12,-58]],g);
+  poly([[-34,-43],[-55,-52],[-58,-22],[-39,-11]],"#708fae");poly([[34,-43],[55,-52],[58,-22],[39,-11]],"#708fae");
+  poly([[-23,-54],[-12,-75],[0,-60],[12,-75],[23,-54]],"#7fa7c4");poly([[-17,-41],[0,-52],[17,-41],[12,-19],[-12,-19]],"#263c5c");
+  c.shadowColor="#65eaff";c.shadowBlur=18;c.fillStyle="#72eaff";c.fillRect(-12,-35,8,5);c.fillRect(5,-35,8,5);
+  c.strokeStyle="#b5f4ff";c.lineWidth=3;c.beginPath();c.moveTo(0,-15);c.lineTo(-8,2);c.lineTo(5,10);c.stroke();
+ }else{c.fillStyle=g;c.beginPath();c.arc(0,0,25,0,7);c.fill();eye(-10,-6);eye(5,-6)}
+ c.shadowBlur=0;c.globalAlpha=.35;c.fillStyle="#050816";c.beginPath();c.ellipse(0,27,isBoss?56:35,7,0,0,7);c.fill();c.globalAlpha=1;
+ const bw=isBoss?100:58,by=isBoss?-125:-68;c.fillStyle="#080d1b";c.fillRect(-bw/2,by,bw,7);c.fillStyle=isBoss?"#ff5486":"#b08cff";c.fillRect(-bw/2,by,bw*clamp(e.hp/e.max,0,1),7);c.strokeStyle="#d9caff88";c.strokeRect(-bw/2,by,bw,7);
+ if(isBoss){c.fillStyle="#ffe2f1";c.font="bold 10px Orbitron";c.textAlign="center";c.fillText("ECLIPSE OVERLORD",0,-135)}
+ c.restore();
+}
+foe=function(e,isBoss=false){drawMonster(e,isBoss)};
+const heroBeforeForge=hero;
+hero=function(){heroBeforeForge();if(!p)return;let w=equippedWeapon(),x=p.x-camera,lift=p.jump>0?Math.sin((p.jump/.38)*Math.PI)*38:0;
+ c.save();c.translate(x,p.y-lift-43);if(p.face<0)c.scale(-1,1);c.rotate(p.atk>0?-.8+(1-p.atk/.31)*1.6:-.2);
+ let metal=c.createLinearGradient(0,-60,0,8);metal.addColorStop(0,"#fff");metal.addColorStop(.35,w.color);metal.addColorStop(1,"#293b5b");c.shadowColor=w.color;c.shadowBlur=14;c.lineCap="round";
+ if(chosen==="Mage"||w.kind==="staff"){c.strokeStyle="#8b6ac0";c.lineWidth=7;c.beginPath();c.moveTo(17,15);c.lineTo(28,-60);c.stroke();c.fillStyle=metal;c.beginPath();c.arc(29,-64,10,0,7);c.fill();c.strokeStyle=w.color;c.lineWidth=3;c.beginPath();c.arc(29,-64,15,0,7);c.stroke()}
+ else if(chosen==="Archer"||w.kind==="bow"){c.strokeStyle=w.color;c.lineWidth=5;c.beginPath();c.arc(23,-20,26,-1.25,1.25);c.stroke();c.strokeStyle="#fff";c.lineWidth=1.5;c.beginPath();c.moveTo(16,-45);c.lineTo(16,5);c.stroke();c.strokeStyle="#dffaff";c.lineWidth=2;c.beginPath();c.moveTo(4,-20);c.lineTo(52,-20);c.stroke()}
+ else if(chosen==="Assassin"||w.kind==="dual"){for(let s of [-1,1]){c.save();c.scale(1,s);c.strokeStyle="#26344d";c.lineWidth=7;c.beginPath();c.moveTo(10,-5);c.lineTo(18,-16);c.stroke();c.fillStyle=metal;c.beginPath();c.moveTo(18,-16);c.lineTo(32,-57);c.lineTo(27,-19);c.closePath();c.fill();c.restore()}}
+ else{c.strokeStyle="#25314b";c.lineWidth=9;c.beginPath();c.moveTo(12,5);c.lineTo(18,-18);c.stroke();c.fillStyle=metal;c.beginPath();if(w.kind==="great"){c.moveTo(18,-16);c.lineTo(2,-45);c.lineTo(9,-72);c.lineTo(27,-58);c.lineTo(36,-31)}else if(w.kind==="katana"){c.moveTo(18,-16);c.lineTo(30,-77);c.lineTo(34,-75);c.lineTo(25,-14)}else{c.moveTo(18,-16);c.lineTo(11,-45);c.lineTo(22,-72);c.lineTo(33,-43)}c.closePath();c.fill();c.strokeStyle="#fff";c.lineWidth=1.5;c.stroke();c.strokeStyle="#e5c77b";c.lineWidth=4;c.beginPath();c.moveTo(9,-19);c.lineTo(31,-15);c.stroke()}
+ if(p.atk>0){c.globalAlpha=.55;c.strokeStyle=w.color;c.lineWidth=5;c.beginPath();c.arc(13,-27,49,-1.15,.8);c.stroke()}c.restore();
+};
+const oldPanelForge=panel;
+panel=function(name){if(name!=="inventory"){oldPanelForge(name);return}
+ $("panel").classList.remove("hidden");document.querySelectorAll(".bottom-nav button").forEach(b=>b.classList.toggle("nav-active",b.dataset.panel===name));
+ $("panelTitle").textContent="ARMORY · WEAPON FORGE";let cur=equippedWeapon();
+ $("panelBody").innerHTML='<div class="armory-equipped"><div class="armory-emblem">⚔</div><div><small>NOW EQUIPPED</small><b>'+cur.name+'</b><span>+'+cur.atk+' ATTACK · '+cur.rarity+'</span></div></div><div class="weapon-grid">'+forgeWeapons.map(w=>{let owned=save.ownedWeapons.includes(w.id),eq=save.weaponId===w.id;return '<article class="weapon-card rarity-'+w.rarity.toLowerCase()+'"><div class="weapon-art" style="--weapon-color:'+w.color+'"><span>⚔</span><i></i></div><div class="weapon-info"><small>'+w.rarity+'</small><b>'+w.name+'</b><p>Weapon power for all classes</p><strong>+'+w.atk+' ATK</strong></div><button class="forge-btn" data-weapon="'+w.id+'" '+(eq?'disabled':'')+'>'+(eq?'EQUIPPED':owned?'EQUIP':w.cost+' G')+'</button></article>'}).join("")+'</div><div class="armory-foot">Gold: <b>'+save.gold+' G</b> · Equip owned weapons or forge new ones.</div>';
+};
+$("panelBody").onclick=function(ev){let btn=ev.target.closest("[data-weapon]");if(!btn)return;let w=forgeWeapons.find(x=>x.id===btn.dataset.weapon);if(!w)return;if(save.ownedWeapons.includes(w.id))equipForgeWeapon(w);else if(save.gold>=w.cost){save.gold-=w.cost;save.ownedWeapons.push(w.id);equipForgeWeapon(w)}else say("NOT ENOUGH GOLD · "+w.cost+" REQUIRED");persist();panel("inventory")};
+persist();
+
 })();
