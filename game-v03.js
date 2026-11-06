@@ -181,7 +181,7 @@ function wave(){
 const updateBeforeCamera=update;
 update=function(dt){updateBeforeCamera(dt);if(p){p.x=Math.max(45,p.x);camera=Math.max(0,p.x-W()*.32)}};
 function drawMonster(e,isBoss=false){
- let x=e.x-camera,y=e.y-(isBoss?45:18)+Math.sin(performance.now()/130+(e.seed||0))*3;if(x<-140||x>W()+140)return;
+ let bob=(e.type==="wraith"||e.type==="slime")?Math.sin(performance.now()/260+(e.seed||0))*2:0;let x=e.x-camera,y=e.y-(isBoss?36:27)+bob;if(x<-140||x>W()+140)return;
  c.save();c.translate(x,y);if(e.x>p.x)c.scale(-1,1);
  let glow=isBoss?"#ff477f":e.type==="hound"?"#a78aff":e.type==="slime"?"#62f5dc":e.type==="golem"?"#7ddcff":e.type==="wraith"?"#c29aff":e.type==="brute"?"#ff986c":"#aa8aff";
  c.shadowColor=e.hit?"#fff":glow;c.shadowBlur=e.hit?26:18;
@@ -220,20 +220,21 @@ function drawMonster(e,isBoss=false){
   c.shadowColor="#65eaff";c.shadowBlur=18;c.fillStyle="#72eaff";c.fillRect(-12,-35,8,5);c.fillRect(5,-35,8,5);
   c.strokeStyle="#b5f4ff";c.lineWidth=3;c.beginPath();c.moveTo(0,-15);c.lineTo(-8,2);c.lineTo(5,10);c.stroke();
  }else{c.fillStyle=g;c.beginPath();c.arc(0,0,25,0,7);c.fill();eye(-10,-6);eye(5,-6)}
- c.shadowBlur=0;c.globalAlpha=.35;c.fillStyle="#050816";c.beginPath();c.ellipse(0,27,isBoss?56:35,7,0,0,7);c.fill();c.globalAlpha=1;
+ c.shadowBlur=0;c.globalAlpha=.35;c.fillStyle="#050816";c.beginPath();c.ellipse(0,isBoss?36:27,isBoss?56:35,7,0,0,7);c.fill();c.globalAlpha=1;
  const bw=isBoss?100:58,by=isBoss?-125:-68;c.fillStyle="#080d1b";c.fillRect(-bw/2,by,bw,7);c.fillStyle=isBoss?"#ff5486":"#b08cff";c.fillRect(-bw/2,by,bw*clamp(e.hp/e.max,0,1),7);c.strokeStyle="#d9caff88";c.strokeRect(-bw/2,by,bw,7);
  if(isBoss){c.fillStyle="#ffe2f1";c.font="bold 10px Orbitron";c.textAlign="center";c.fillText("ECLIPSE OVERLORD",0,-135)}
  c.restore();
 }
 foe=function(e,isBoss=false){drawMonster(e,isBoss)};
 const heroBeforeForge=hero;
-// Draw the weapon from the character's actual right-hand area BEFORE the sprite.
-// The forearm/hand therefore sits in front of the grip instead of the blade floating over the body.
+// Draw the character first, then attach the weapon at the right-hand grip.
+// The grip anchor follows the fallback arm endpoint (x+27, y-50).
 hero=function(){
  if(!p)return;
+ heroBeforeForge();
  let w=equippedWeapon(),x=p.x-camera,lift=p.jump>0?Math.sin((p.jump/.38)*Math.PI)*38:0;
  c.save();
- c.translate(x+13,p.y-lift-52);
+ c.translate(x+27,p.y-lift-50);
  if(p.face<0)c.scale(-1,1);
  c.rotate(p.atk>0?-.8+(1-p.atk/.31)*1.6:-.2);
  let metal=c.createLinearGradient(0,-60,0,8);
@@ -253,7 +254,6 @@ hero=function(){
    c.fillStyle=metal;c.beginPath();c.moveTo(7,-13);c.lineTo(22,-57);c.lineTo(17,-16);c.closePath();c.fill();c.restore();
   }
  }else{
-  // Grip ends at the palm; blade rises from the fist, aligned with the forearm.
   c.strokeStyle="#25314b";c.lineWidth=8;c.beginPath();c.moveTo(0,3);c.lineTo(5,-17);c.stroke();
   c.fillStyle=metal;c.beginPath();
   if(w.kind==="great"){c.moveTo(5,-17);c.lineTo(-10,-45);c.lineTo(-3,-72);c.lineTo(14,-58);c.lineTo(23,-31)}
@@ -264,8 +264,6 @@ hero=function(){
  }
  if(p.atk>0){c.globalAlpha=.48;c.strokeStyle=w.color;c.lineWidth=5;c.beginPath();c.arc(0,-28,49,-1.15,.8);c.stroke()}
  c.restore();
- // Character is rendered over the grip so the sword visually attaches to the hand.
- heroBeforeForge();
 };
 const oldPanelForge=panel;
 panel=function(name){if(name!=="inventory"){oldPanelForge(name);return}
