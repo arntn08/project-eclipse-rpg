@@ -6,3 +6,5 @@
 .bottom-nav{justify-content:space-evenly}.bottom-nav button{min-width:48px}.panel-row{transition:border-color .15s,background .15s}.panel-row:active{border-color:var(--cyan);background:#172b48}.mini-btn:active{filter:brightness(1.35);transform:translateY(1px)}
 
 .class-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.class-card{min-height:118px}.key-hint{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:4;padding:5px 9px;border:1px solid #3b5b7c;border-radius:5px;background:#081326c9;color:#c6d8ed;font:8px Orbitron;white-space:nowrap;pointer-events:none}@media(min-width:700px){.class-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:540px){.key-hint{display:none}}
+
+.action.skill2{border-color:#a77cff}.action.skill2 span{color:#d5b0ff}
