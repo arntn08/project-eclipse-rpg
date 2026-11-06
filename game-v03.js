@@ -124,4 +124,10 @@ $("panelBody").onclick=function(ev){
  checkAchievements();persist();panel(name);
 };
 
+
+const localDay=()=>{let d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()};
+if(save.dailyDate!==localDay()){save.dailyDate=localDay();save.dailyProgress=0;save.dailyClaimed=false}
+const startWithBonuses=start;
+start=function(){startWithBonuses();if(p&&save.maxHpBonus){p.max+=save.maxHpBonus;p.hp=p.max}persist()};
+
 })();
